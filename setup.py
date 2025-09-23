@@ -7,7 +7,7 @@ setup(
     name="serpex-sdk",
     version="1.0.0",
     author="Serpex Team",
-    author_email="support@serpex.ai",
+    author_email="support@serpex.dev",
     description="Official Python SDK for Serpex SERP API - Fetch search results in JSON format",
     long_description=long_description,
     long_description_content_type="text/markdown",
