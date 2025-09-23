@@ -184,34 +184,3 @@ class SerpApiClient:
             infoboxes=data["infoboxes"],
             suggestions=data["suggestions"],
         )
-
-    def update_api_key(self, api_key: str) -> None:
-        """
-        Update the API key.
-
-        Args:
-            api_key: New API key
-
-        Raises:
-            ValueError: If api_key is not provided or is not a string
-        """
-        if not api_key or not isinstance(api_key, str):
-            raise ValueError("API key must be a non-empty string")
-
-        self.api_key = api_key
-        self.session.headers["Authorization"] = f"Bearer {self.api_key}"
-
-    def update_base_url(self, base_url: str) -> None:
-        """
-        Update the base URL.
-
-        Args:
-            base_url: New base URL
-
-        Raises:
-            ValueError: If base_url is not provided or is not a string
-        """
-        if not base_url or not isinstance(base_url, str):
-            raise ValueError("Base URL must be a non-empty string")
-
-        self.base_url = base_url.rstrip("/")

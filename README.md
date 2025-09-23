@@ -79,14 +79,6 @@ params = SearchParams(
 results = client.search(params)
 ```
 
-##### `update_api_key(api_key: str) -> None`
-
-Update the API key.
-
-##### `update_base_url(base_url: str) -> None`
-
-Update the base URL.
-
 ## Search Parameters
 
 The `SearchParams` dataclass supports all search parameters:
