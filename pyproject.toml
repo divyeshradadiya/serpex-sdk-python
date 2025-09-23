@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "serpex-sdk"
-version = "1.0.1"
+version = "1.0.2"
 description = "Official Python SDK for Serpex SERP API - Fetch search results in JSON format"
 authors = [
     {name = "Serpex Team", email = "support@serpex.dev"}
