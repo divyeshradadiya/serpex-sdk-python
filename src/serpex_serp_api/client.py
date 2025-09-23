@@ -163,7 +163,7 @@ class SerpApiClient:
         # Handle engine parameter - must be specified
         if not params.engine:
             raise ValueError('Engine parameter is required (google, bing, duckduckgo, or brave)')
-        request_params['engines'] = [params.engine]
+        request_params['engine'] = params.engine
 
         data = self._make_request(request_params)
 
