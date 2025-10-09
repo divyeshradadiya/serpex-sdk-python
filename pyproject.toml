@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "serpex-sdk"
-version = "1.0.4"
+name = "serpex"
+version = "2.0.0"
 description = "Official Python SDK for Serpex SERP API - Fetch search results in JSON format"
 authors = [
     {name = "Serpex Team", email = "support@serpex.dev"}

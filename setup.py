@@ -4,8 +4,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(
-    name="serpex-sdk",
-    version="1.0.3",
+    name="serpex",
+    version="2.0.0",
     author="Serpex Team",
     author_email="support@serpex.dev",
     description="Official Python SDK for Serpex SERP API - Fetch search results in JSON format",

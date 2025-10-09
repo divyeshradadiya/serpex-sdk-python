@@ -1,23 +1,23 @@
-# serpex-sdk
+# serpex
 
 Official Python SDK for the Serpex SERP API - Fetch search results in JSON format.
 
 ## Installation
 
 ```bash
-pip install serpex-sdk
+pip install serpex
 ```
 
 Or with poetry:
 
 ```bash
-poetry add serpex-sdk
+poetry add serpex
 ```
 
 ## Quick Start
 
 ```python
-from serpex-sdk import SerpApiClient
+from serpex import SerpApiClient
 
 # Initialize the client with your API key
 client = SerpApiClient('your-api-key-here')
@@ -30,7 +30,7 @@ results = client.search({
 })
 
 # Or using SearchParams object for type safety
-from serpex-sdk import SearchParams
+from serpex import SearchParams
 
 params = SearchParams(q='python tutorial', engine='google', language='en')
 results = client.search(params)
@@ -68,7 +68,7 @@ results = client.search({
 })
 
 # Using SearchParams object (type-safe approach)
-from serpex-sdk import SearchParams
+from serpex import SearchParams
 
 params = SearchParams(
     q='javascript frameworks',
@@ -142,7 +142,7 @@ class SearchResponse:
 The SDK raises `SerpApiException` for API errors:
 
 ```python
-from serpex-sdk import SerpApiClient, SerpApiException
+from serpex import SerpApiClient, SerpApiException
 
 try:
     results = client.search(SearchParams(q='test query'))
