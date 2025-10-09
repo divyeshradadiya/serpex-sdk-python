@@ -17,10 +17,10 @@ poetry add serpex
 ## Quick Start
 
 ```python
-from serpex import SerpApiClient
+from serpex import SerpexClient
 
 # Initialize the client with your API key
-client = SerpApiClient('your-api-key-here')
+client = SerpexClient('your-api-key-here')
 
 # Search using a dictionary (recommended for simple use cases)
 results = client.search({
@@ -41,12 +41,12 @@ print(results.results)
 
 ## API Reference
 
-### SerpApiClient
+### SerpexClient
 
 #### Constructor
 
 ```python
-SerpApiClient(api_key: str, base_url: str = "https://api.serpex.dev")
+SerpexClient(api_key: str, base_url: str = "https://api.serpex.dev")
 ```
 
 - `api_key`: Your API key from the Serpex dashboard
@@ -142,7 +142,7 @@ class SearchResponse:
 The SDK raises `SerpApiException` for API errors:
 
 ```python
-from serpex import SerpApiClient, SerpApiException
+from serpex import SerpexClient, SerpApiException
 
 try:
     results = client.search(SearchParams(q='test query'))

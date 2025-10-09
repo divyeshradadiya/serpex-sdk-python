@@ -10,7 +10,7 @@ from .types import SearchResponse, SearchParams
 from .exceptions import SerpApiException
 
 
-class SerpApiClient:
+class SerpexClient:
     """
     Official Python client for the Serpex SERP API.
 
