@@ -98,7 +98,6 @@ class SearchParams:
     pageno: Optional[int] = None
     page: Optional[int] = None
     time_range: Optional[str] = None
-    safesearch: Optional[int] = None
 
     # Google specific
     hl: Optional[str] = None  # language
@@ -116,9 +115,6 @@ class SearchParams:
     spellcheck: Optional[bool] = None
     ui_lang: Optional[str] = None
     country: Optional[str] = None
-
-    # Legacy support
-    maxResults: Optional[int] = None
 ```
 
 ## Response Format
