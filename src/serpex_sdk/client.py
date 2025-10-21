@@ -151,8 +151,8 @@ class SerpexClient:
         # Prepare request parameters with only supported params
         request_params = {
             'q': params.q,
-            'engine': params.engine or 'google',
-            'category': params.category or 'general',
+            'engine': params.engine or 'auto',
+            'category': params.category or 'web',
             'time_range': params.time_range or 'all',
             'format': params.format or 'json'
         }

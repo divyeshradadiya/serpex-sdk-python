@@ -22,21 +22,19 @@ from serpex import SerpexClient
 # Initialize the client with your API key
 client = SerpexClient('your-api-key-here')
 
-# Search using a dictionary (recommended for simple use cases)
+# Search with auto-routing (recommended for simple use cases)
 results = client.search({
     'q': 'python tutorial',
-    'engine': 'google',
-    'language': 'en'
+    'engine': 'auto'
 })
 
 # Or using SearchParams object for type safety
 from serpex import SearchParams
 
-params = SearchParams(q='python tutorial', engine='google', language='en')
+params = SearchParams(q='python tutorial', engine='auto')
 results = client.search(params)
 
-print(results.results)
-
+print(results.results[0].title)
 ```
 
 ## API Reference
@@ -56,15 +54,15 @@ SerpexClient(api_key: str, base_url: str = "https://api.serpex.dev")
 
 ##### `search(params: SearchParams | Dict[str, Any]) -> SearchResponse`
 
-Search using the SERP API with flexible parameters. Accepts either a SearchParams object or a dictionary. Engine parameter is required.
+Search using the SERP API with flexible parameters. Accepts either a SearchParams object or a dictionary.
 
 ```python
 # Using dictionary (simple approach)
 results = client.search({
     'q': 'javascript frameworks',
-    'engine': 'brave',
-    'category': 'search',
-    'country': 'US'
+    'engine': 'google',
+    'category': 'web',
+    'time_range': 'week'
 })
 
 # Using SearchParams object (type-safe approach)
@@ -72,9 +70,9 @@ from serpex import SearchParams
 
 params = SearchParams(
     q='javascript frameworks',
-    engine='brave',
-    category='search',
-    country='US'
+    engine='google',
+    category='web',
+    time_range='week'
 )
 results = client.search(params)
 ```
@@ -86,36 +84,31 @@ The `SearchParams` dataclass supports all search parameters:
 ```python
 @dataclass
 class SearchParams:
-    # Required: query (use either q or query)
-    q: Optional[str] = None
-    query: Optional[str] = None
+    # Required: search query
+    q: str
 
-    # Engine selection (only one engine allowed)
-    engine: Optional[str] = None
+    # Optional: Engine selection (defaults to 'auto')
+    engine: Optional[str] = 'auto'
 
-    # Common parameters
-    language: Optional[str] = None
-    pageno: Optional[int] = None
-    page: Optional[int] = None
-    time_range: Optional[str] = None
+    # Optional: Search category (currently only 'web' supported)
+    category: Optional[str] = 'web'
 
-    # Google specific
-    hl: Optional[str] = None  # language
-    lr: Optional[str] = None  # language restrict
-    cr: Optional[str] = None  # country restrict
+    # Optional: Time range filter
+    time_range: Optional[str] = 'all'
 
-    # Bing specific
-    mkt: Optional[str] = None  # market
-
-    # DuckDuckGo specific
-    region: Optional[str] = None
-
-    # Brave specific
-    category: Optional[str] = None
-    spellcheck: Optional[bool] = None
-    ui_lang: Optional[str] = None
-    country: Optional[str] = None
+    # Optional: Response format
+    format: Optional[str] = 'json'
 ```
+
+## Supported Engines
+
+- **auto**: Automatically routes to the best available search engine
+- **google**: Google's primary search engine
+- **bing**: Microsoft's search engine
+- **duckduckgo**: Privacy-focused search engine
+- **brave**: Privacy-first search engine
+- **yahoo**: Yahoo search engine
+- **yandex**: Russian search engine
 
 ## Response Format
 
@@ -146,6 +139,58 @@ except SerpApiException as e:
     print(f"API error: {e}")
     print(f"Status code: {e.status_code}")
     print(f"Details: {e.details}")
+```
+
+## Examples
+
+### Basic Search
+```python
+results = client.search({
+    'q': 'coffee shops near me'
+})
+```
+
+### Advanced Search with Filters
+```python
+results = client.search({
+    'q': 'latest AI news',
+    'engine': 'google',
+    'time_range': 'day',
+    'category': 'web'
+})
+```
+
+### Using SearchParams Object
+```python
+from serpex import SearchParams
+
+params = SearchParams(
+    q='machine learning',
+    engine='auto',
+    time_range='month'
+)
+results = client.search(params)
+```
+
+### Using Different Engines
+```python
+# Auto-routing (recommended)
+auto_results = client.search({
+    'q': 'python programming',
+    'engine': 'auto'
+})
+
+# Specific engine
+google_results = client.search({
+    'q': 'python programming',
+    'engine': 'google'
+})
+
+# Privacy-focused search
+ddg_results = client.search({
+    'q': 'python programming',
+    'engine': 'duckduckgo'
+})
 ```
 
 ## Requirements

@@ -49,11 +49,11 @@ class SearchParams:
     # Required: search query
     q: str
 
-    # Optional: Engine selection (defaults to 'google')
-    engine: Optional[str] = 'google'
+    # Optional: Engine selection (defaults to 'auto')
+    engine: Optional[str] = 'auto'
 
-    # Optional: Search category
-    category: Optional[str] = 'general'
+    # Optional: Search category (currently only 'web' supported)
+    category: Optional[str] = 'web'
 
     # Optional: Time range filter
     time_range: Optional[str] = 'all'
