@@ -142,28 +142,20 @@ class SerpexClient:
             params = SearchParams(**params)
 
         # Validate required parameters
-        search_query = params.q or params.query
-        if not search_query or not isinstance(search_query, str) or not search_query.strip():
-            raise ValueError("Query parameter (q or query) is required and must be a non-empty string")
+        if not params.q or not isinstance(params.q, str) or not params.q.strip():
+            raise ValueError("Query parameter (q) is required and must be a non-empty string")
 
-        if len(search_query) > 500:
+        if len(params.q) > 500:
             raise ValueError("Query too long (max 500 characters)")
 
-        # Prepare request parameters
-        request_params = {}
-
-        # Convert SearchParams to dict, excluding None values
-        for key, value in params.__dict__.items():
-            if value is not None:
-                request_params[key] = value
-
-        # Ensure we have a query parameter
-        request_params['q'] = search_query
-
-        # Handle engine parameter - must be specified
-        if not params.engine:
-            raise ValueError('Engine parameter is required (google, bing, duckduckgo, or brave)')
-        request_params['engine'] = params.engine
+        # Prepare request parameters with only supported params
+        request_params = {
+            'q': params.q,
+            'engine': params.engine or 'google',
+            'category': params.category or 'general',
+            'time_range': params.time_range or 'all',
+            'format': params.format or 'json'
+        }
 
         data = self._make_request(request_params)
 

@@ -46,32 +46,17 @@ class SearchResponse:
 @dataclass
 class SearchParams:
     """Parameters for search requests."""
-    # Required: query (use either q or query)
-    q: Optional[str] = None
-    query: Optional[str] = None
+    # Required: search query
+    q: str
 
-    # Engine selection (only one engine allowed)
-    engine: Optional[str] = None
+    # Optional: Engine selection (defaults to 'google')
+    engine: Optional[str] = 'google'
 
-    # Common parameters
-    language: Optional[str] = None
-    pageno: Optional[int] = None
-    page: Optional[int] = None
-    time_range: Optional[str] = None
+    # Optional: Search category
+    category: Optional[str] = 'general'
 
-    # Google specific
-    hl: Optional[str] = None  # language
-    lr: Optional[str] = None  # language restrict
-    cr: Optional[str] = None  # country restrict
+    # Optional: Time range filter
+    time_range: Optional[str] = 'all'
 
-    # Bing specific
-    mkt: Optional[str] = None  # market
-
-    # DuckDuckGo specific
-    region: Optional[str] = None
-
-    # Brave specific
-    category: Optional[str] = None
-    spellcheck: Optional[bool] = None
-    ui_lang: Optional[str] = None
-    country: Optional[str] = None
+    # Optional: Response format
+    format: Optional[str] = 'json'
