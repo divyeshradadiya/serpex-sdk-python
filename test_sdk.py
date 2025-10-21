@@ -6,7 +6,7 @@ Tests the updated SDK with only supported parameters
 from serpex_sdk import SerpexClient
 import time
 
-API_KEY = 'sk_50d69d9ba447b7425cfdc6084ef60bafa169e3d1db68c5285f2b8f724d683fa0'
+API_KEY = 'sk_test_dummy_api_key_for_testing_only'
 BASE_URL = 'http://localhost:3002'
 
 
