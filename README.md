@@ -52,29 +52,66 @@ SerpexClient(api_key: str, base_url: str = "https://api.serpex.dev")
 
 #### Methods
 
-##### `search(params: SearchParams | Dict[str, Any]) -> SearchResponse`
+##### `extract(params: ExtractParams | Dict[str, Any]) -> ExtractResponse`
 
-Search using the SERP API with flexible parameters. Accepts either a SearchParams object or a dictionary.
+Extract content from web pages and convert them to LLM-ready markdown data. Accepts up to 10 URLs per request.
 
 ```python
 # Using dictionary (simple approach)
-results = client.search({
-    'q': 'javascript frameworks',
-    'engine': 'google',
-    'category': 'web',
-    'time_range': 'week'
+results = client.extract({
+    'urls': [
+        'https://example.com',
+        'https://httpbin.org'
+    ]
 })
 
-# Using SearchParams object (type-safe approach)
-from serpex import SearchParams
+# Using ExtractParams object (type-safe approach)
+from serpex import ExtractParams
 
-params = SearchParams(
-    q='javascript frameworks',
-    engine='google',
-    category='web',
-    time_range='week'
-)
-results = client.search(params)
+params = ExtractParams(urls=[
+    'https://example.com',
+    'https://httpbin.org'
+])
+results = client.extract(params)
+```
+
+## Extract Parameters
+
+The `ExtractParams` dataclass supports extraction parameters:
+
+```python
+@dataclass
+class ExtractParams:
+    # Required: URLs to extract (max 10)
+    urls: List[str]
+```
+
+## Extract Response Format
+
+```python
+@dataclass
+class ExtractResponse:
+    success: bool
+    results: List[ExtractResult]
+    metadata: ExtractMetadata
+
+@dataclass
+class ExtractResult:
+    url: str
+    success: bool
+    markdown: Optional[str] = None
+    error: Optional[str] = None
+    status_code: Optional[int] = None
+
+@dataclass
+class ExtractMetadata:
+    total_urls: int
+    processed_urls: int
+    successful_crawls: int
+    failed_crawls: int
+    credits_used: int
+    response_time: int
+    timestamp: str
 ```
 
 ## Search Parameters
@@ -172,25 +209,76 @@ params = SearchParams(
 results = client.search(params)
 ```
 
-### Using Different Engines
+### Extract Web Content to LLM-Ready Data
+
+#### Extract from a Single URL
 ```python
-# Auto-routing (recommended)
-auto_results = client.search({
-    'q': 'python programming',
-    'engine': 'auto'
+# Extract content from one website
+result = client.extract({
+    'urls': ['https://example.com']
 })
 
-# Specific engine
-google_results = client.search({
-    'q': 'python programming',
-    'engine': 'google'
+if result.results[0].success:
+    print(f"✅ Extracted {len(result.results[0].markdown)} characters")
+    print("Markdown content:", result.results[0].markdown[:200] + "...")
+```
+
+#### Extract from Multiple URLs (up to 10 at once)
+```python
+# Extract content from multiple websites (up to 10 URLs)
+extract_results = client.extract({
+    'urls': [
+        'https://example.com',
+        'https://httpbin.org',
+        'https://github.com'
+    ]
 })
 
-# Privacy-focused search
-ddg_results = client.search({
-    'q': 'python programming',
-    'engine': 'duckduckgo'
-})
+print(f"Successfully extracted {extract_results.metadata.successful_crawls} pages")
+print(f"Total credits used: {extract_results.metadata.credits_used}")
+
+for result in extract_results.results:
+    if result.success:
+        print(f"✅ {result.url}: {len(result.markdown)} characters")
+        # Use result.markdown for LLM processing
+    else:
+        print(f"❌ {result.url}: {result.error}")
+```
+
+#### Sample Response
+```python
+# Example response structure
+{
+    'success': True,
+    'results': [
+        {
+            'url': 'https://example.com',
+            'success': True,
+            'markdown': '# Example Domain\n\nThis domain is for use in...',
+            'status_code': 200
+        }
+    ],
+    'metadata': {
+        'total_urls': 1,
+        'processed_urls': 1,
+        'successful_crawls': 1,
+        'failed_crawls': 0,
+        'credits_used': 3,
+        'response_time': 255,
+        'timestamp': '2025-11-13T10:30:00.000Z'
+    }
+}
+```
+
+### Using ExtractParams Object
+```python
+from serpex import ExtractParams
+
+params = ExtractParams(urls=[
+    'https://example.com',
+    'https://httpbin.org'
+])
+results = client.extract(params)
 ```
 
 ## Requirements
