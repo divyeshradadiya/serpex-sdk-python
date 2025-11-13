@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "serpex"
-version = "2.1.0"
-description = "Official Python SDK for Serpex SERP API - Fetch search results in JSON format"
+version = "2.2.0"
+description = "Official Python SDK for Serpex Search API - Fetch search results in JSON format"
 authors = [
     {name = "Serpex Team", email = "support@serpex.dev"}
 ]
@@ -33,10 +33,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/divyeshradadiya/serp-frontend"
-Repository = "https://github.com/divyeshradadiya/serp-frontend"
-"Bug Reports" = "https://github.com/divyeshradadiya/serp-frontend/issues"
-Documentation = "https://github.com/divyeshradadiya/serp-frontend#readme"
+Homepage = "https://github.com/divyeshradadiya/serpex-sdk-python"
+Repository = "https://github.com/divyeshradadiya/serpex-sdk-python"
+"Bug Reports" = "https://github.com/divyeshradadiya/serpex-sdk-python/issues"
+Documentation = "https://github.com/divyeshradadiya/serpex-sdk-python#readme"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -7,7 +7,7 @@ from serpex_sdk import SerpexClient
 import time
 
 API_KEY = 'sk_test_dummy_api_key_for_testing_only'
-BASE_URL = 'http://localhost:3002'
+BASE_URL = 'https://api.serpex.dev'
 
 
 def test_search():
@@ -73,6 +73,22 @@ def test_search():
         print(f'   Query: {result4.query}')
         print(f'   Results: {len(result4.results)}')
         print(f'   Time range: day\n')
+
+        time.sleep(2)
+
+        # Test 5: Extract content from URLs
+        print('Test 5: Extract content from web pages')
+        result5 = client.extract({
+            'urls': [
+                'https://example.com',
+                'https://httpbin.org'
+            ]
+        })
+        print('✅ Test 5 passed')
+        print(f'   Success: {result5.success}')
+        print(f'   Total URLs: {result5.metadata.total_urls}')
+        print(f'   Successful crawls: {result5.metadata.successful_crawls}')
+        print(f'   Credits used: {result5.metadata.credits_used}\n')
 
         print('🎉 All tests passed successfully!')
 

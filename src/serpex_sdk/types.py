@@ -44,6 +44,46 @@ class SearchResponse:
 
 
 @dataclass
+class ExtractResult:
+    """Represents a single extraction result."""
+    url: str
+    success: bool
+    markdown: Optional[str] = None
+    error: Optional[str] = None
+    error_type: Optional[str] = None
+    status_code: Optional[int] = None
+    crawled_at: Optional[str] = None
+    extraction_mode: Optional[str] = None
+
+
+@dataclass
+class ExtractMetadata:
+    """Metadata for extraction results."""
+    total_urls: int
+    processed_urls: int
+    successful_crawls: int
+    failed_crawls: int
+    credits_used: int
+    response_time: int
+    timestamp: str
+
+
+@dataclass
+class ExtractResponse:
+    """Complete extraction response."""
+    success: bool
+    results: List[ExtractResult]
+    metadata: ExtractMetadata
+
+
+@dataclass
+class ExtractParams:
+    """Parameters for extraction requests."""
+    # Required: URLs to extract (max 10)
+    urls: List[str]
+
+
+@dataclass
 class SearchParams:
     """Parameters for search requests."""
     # Required: search query
