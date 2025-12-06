@@ -45,8 +45,8 @@ setup(
     },
     keywords="serp search api google search-results seo python sdk",
     project_urls={
-        "Bug Reports": "https://github.com/divyeshradadiya/serp-frontend/issues",
-        "Source": "https://github.com/divyeshradadiya/serp-frontend",
-        "Documentation": "https://github.com/divyeshradadiya/serp-frontend#readme",
+        "Bug Reports": "https://github.com/divyeshradadiya/serpex-sdk-python/issues",
+        "Source": "https://github.com/divyeshradadiya/serpex-sdk-python",
+        "Documentation": "https://github.com/divyeshradadiya/serpex-sdk-python#readme",
     },
 )
