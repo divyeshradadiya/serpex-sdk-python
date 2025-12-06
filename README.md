@@ -127,15 +127,33 @@ class SearchParams:
     # Optional: Engine selection (defaults to 'auto')
     engine: Optional[str] = 'auto'
 
-    # Optional: Search category (currently only 'web' supported)
-    category: Optional[str] = 'web'
+    # Optional: Search category ('web' for general search, 'news' for news articles - always returns latest news)
+    category: Optional[str] = 'web'  # Supports: 'web', 'news'
 
-    # Optional: Time range filter
+    # Optional: Time range filter (only applicable for 'web' category, ignored for 'news')
     time_range: Optional[str] = 'all'
 
     # Optional: Response format
     format: Optional[str] = 'json'
 ```
+
+### News Search Example
+
+News search always returns the latest news articles. The `time_range` parameter is ignored for news searches.
+
+```python
+# Search for latest news articles
+news_results = client.search({
+    'q': 'artificial intelligence',
+    'engine': 'google',
+    'category': 'news'  # Always returns latest news
+})
+
+print(news_results.results[0].title)
+print(news_results.results[0].published_date)
+```
+
+````
 
 ## Supported Engines
 
@@ -161,7 +179,7 @@ class SearchResponse:
     corrections: List[str]
     infoboxes: List[Any]
     suggestions: List[str]
-```
+````
 
 ## Error Handling
 
@@ -181,6 +199,7 @@ except SerpApiException as e:
 ## Examples
 
 ### Basic Search
+
 ```python
 results = client.search({
     'q': 'coffee shops near me'
@@ -188,6 +207,7 @@ results = client.search({
 ```
 
 ### Advanced Search with Filters
+
 ```python
 results = client.search({
     'q': 'latest AI news',
@@ -198,6 +218,7 @@ results = client.search({
 ```
 
 ### Using SearchParams Object
+
 ```python
 from serpex import SearchParams
 
@@ -212,6 +233,7 @@ results = client.search(params)
 ### Extract Web Content to LLM-Ready Data
 
 #### Extract from a Single URL
+
 ```python
 # Extract content from one website
 result = client.extract({
@@ -224,6 +246,7 @@ if result.results[0].success:
 ```
 
 #### Extract from Multiple URLs (up to 10 at once)
+
 ```python
 # Extract content from multiple websites (up to 10 URLs)
 extract_results = client.extract({
@@ -246,6 +269,7 @@ for result in extract_results.results:
 ```
 
 #### Sample Response
+
 ```python
 # Example response structure
 {
@@ -271,6 +295,7 @@ for result in extract_results.results:
 ```
 
 ### Using ExtractParams Object
+
 ```python
 from serpex import ExtractParams
 

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 @dataclass
 class SearchResult:
     """Represents a single search result."""
+
     title: str
     url: str
     snippet: str
@@ -23,15 +24,18 @@ class SearchResult:
 @dataclass
 class SearchMetadata:
     """Metadata for search results."""
+
     number_of_results: int
     response_time: int
     timestamp: str
     credits_used: int
+    category: Optional[str] = None  # Optional category field for news searches
 
 
 @dataclass
 class SearchResponse:
     """Complete search response."""
+
     metadata: SearchMetadata
     id: str
     query: str
@@ -46,6 +50,7 @@ class SearchResponse:
 @dataclass
 class ExtractResult:
     """Represents a single extraction result."""
+
     url: str
     success: bool
     markdown: Optional[str] = None
@@ -59,6 +64,7 @@ class ExtractResult:
 @dataclass
 class ExtractMetadata:
     """Metadata for extraction results."""
+
     total_urls: int
     processed_urls: int
     successful_crawls: int
@@ -71,6 +77,7 @@ class ExtractMetadata:
 @dataclass
 class ExtractResponse:
     """Complete extraction response."""
+
     success: bool
     results: List[ExtractResult]
     metadata: ExtractMetadata
@@ -79,6 +86,7 @@ class ExtractResponse:
 @dataclass
 class ExtractParams:
     """Parameters for extraction requests."""
+
     # Required: URLs to extract (max 10)
     urls: List[str]
 
@@ -86,17 +94,18 @@ class ExtractParams:
 @dataclass
 class SearchParams:
     """Parameters for search requests."""
+
     # Required: search query
     q: str
 
     # Optional: Engine selection (defaults to 'auto')
-    engine: Optional[str] = 'auto'
+    engine: Optional[str] = "auto"
 
-    # Optional: Search category (currently only 'web' supported)
-    category: Optional[str] = 'web'
+    # Optional: Search category ('web' for general search, 'news' for news articles - always returns latest news)
+    category: Optional[str] = "web"  # Supports: 'web', 'news'
 
-    # Optional: Time range filter
-    time_range: Optional[str] = 'all'
+    # Optional: Time range filter (only applicable for 'web' category, ignored for 'news')
+    time_range: Optional[str] = "all"
 
     # Optional: Response format
-    format: Optional[str] = 'json'
+    format: Optional[str] = "json"

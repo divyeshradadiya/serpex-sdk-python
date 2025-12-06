@@ -6,7 +6,14 @@ import requests
 from typing import Optional, Dict, Any, Union
 from urllib.parse import urlencode
 
-from .types import SearchResponse, SearchParams, ExtractResponse, ExtractParams, ExtractResult, ExtractMetadata
+from .types import (
+    SearchResponse,
+    SearchParams,
+    ExtractResponse,
+    ExtractParams,
+    ExtractResult,
+    ExtractMetadata,
+)
 from .exceptions import SerpApiException
 
 
@@ -35,12 +42,16 @@ class SerpexClient:
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
         self.session = requests.Session()
-        self.session.headers.update({
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        })
+        self.session.headers.update(
+            {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
+        )
 
-    def _make_request(self, params: Dict[str, Any], endpoint: str = "/api/search", method: str = "GET") -> Dict[str, Any]:
+    def _make_request(
+        self, params: Dict[str, Any], endpoint: str = "/api/search", method: str = "GET"
+    ) -> Dict[str, Any]:
         """
         Make an authenticated request to the API.
 
@@ -77,7 +88,7 @@ class SerpexClient:
                 query_string = urlencode(filtered_params, doseq=True)
                 final_url = f"{url}?{query_string}" if query_string else url
                 response = self.session.get(final_url, timeout=30)
-            
+
             return self._handle_response(response)
         except requests.RequestException as e:
             raise SerpApiException(f"Request failed: {str(e)}")
@@ -105,9 +116,7 @@ class SerpexClient:
             try:
                 data = response.json()
                 raise SerpApiException(
-                    data.get("error", "Validation error"),
-                    status_code=400,
-                    details=data
+                    data.get("error", "Validation error"), status_code=400, details=data
                 )
             except ValueError:
                 raise SerpApiException("Bad request", status_code=400)
@@ -117,12 +126,11 @@ class SerpexClient:
                 raise SerpApiException(
                     data.get("error", f"API error: {response.reason}"),
                     status_code=response.status_code,
-                    details=data
+                    details=data,
                 )
             except ValueError:
                 raise SerpApiException(
-                    f"API error: {response.reason}",
-                    status_code=response.status_code
+                    f"API error: {response.reason}", status_code=response.status_code
                 )
 
         try:
@@ -150,21 +158,30 @@ class SerpexClient:
 
         # Validate required parameters
         if not params.q or not isinstance(params.q, str) or not params.q.strip():
-            raise ValueError("Query parameter (q) is required and must be a non-empty string")
+            raise ValueError(
+                "Query parameter (q) is required and must be a non-empty string"
+            )
 
         if len(params.q) > 500:
             raise ValueError("Query too long (max 500 characters)")
 
+        # Determine endpoint based on category
+        category = params.category or "web"
+        endpoint = "/api/search/news" if category == "news" else "/api/search"
+
         # Prepare request parameters with only supported params
         request_params = {
-            'q': params.q,
-            'engine': params.engine or 'auto',
-            'category': params.category or 'web',
-            'time_range': params.time_range or 'all',
-            'format': params.format or 'json'
+            "q": params.q,
+            "engine": params.engine or "auto",
+            "format": params.format or "json",
         }
 
-        data = self._make_request(request_params)
+        # Add category for web search, omit for news (news endpoint doesn't need it)
+        if category == "web":
+            request_params["category"] = "web"
+            request_params["time_range"] = params.time_range or "all"
+
+        data = self._make_request(request_params, endpoint=endpoint)
 
         # Convert response to SearchResponse object
         from .types import SearchResult, SearchMetadata
@@ -178,10 +195,10 @@ class SerpexClient:
             query=data["query"],
             engines=data["engines"],
             results=results,
-            answers=data["answers"],
-            corrections=data["corrections"],
-            infoboxes=data["infoboxes"],
-            suggestions=data["suggestions"],
+            answers=data.get("answers", []),
+            corrections=data.get("corrections", []),
+            infoboxes=data.get("infoboxes", []),
+            suggestions=data.get("suggestions", []),
         )
 
     def extract(self, params: Union[ExtractParams, Dict[str, Any]]) -> ExtractResponse:
@@ -203,7 +220,11 @@ class SerpexClient:
             params = ExtractParams(**params)
 
         # Validate required parameters
-        if not params.urls or not isinstance(params.urls, list) or len(params.urls) == 0:
+        if (
+            not params.urls
+            or not isinstance(params.urls, list)
+            or len(params.urls) == 0
+        ):
             raise ValueError("URLs list is required and must contain at least one URL")
 
         if len(params.urls) > 10:
@@ -217,6 +238,7 @@ class SerpexClient:
                 continue
             try:
                 from urllib.parse import urlparse
+
                 parsed = urlparse(url)
                 if not parsed.scheme or not parsed.netloc:
                     invalid_urls.append(url)
@@ -227,11 +249,9 @@ class SerpexClient:
             raise ValueError(f"Invalid URLs provided: {invalid_urls}")
 
         # Prepare request parameters
-        request_params = {
-            'urls': params.urls
-        }
+        request_params = {"urls": params.urls}
 
-        data = self._make_request(request_params, endpoint='/api/crawl', method='POST')
+        data = self._make_request(request_params, endpoint="/api/crawl", method="POST")
 
         # Convert response to ExtractResponse object
         metadata = ExtractMetadata(**data["metadata"])

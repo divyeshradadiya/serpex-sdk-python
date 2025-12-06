@@ -5,13 +5,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="serpex",
-    version="2.2.0",
+    version="2.3.0",
     author="Serpex Team",
     author_email="support@serpex.dev",
     description="Official Python SDK for Serpex SERP API - Fetch search results in JSON format",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/divyeshradadiya/serp-frontend",
+    url="https://github.com/divyeshradadiya/serpex-sdk-python",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
