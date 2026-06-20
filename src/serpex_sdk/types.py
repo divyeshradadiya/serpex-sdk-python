@@ -29,6 +29,8 @@ class SearchMetadata:
     response_time: int
     timestamp: str
     credits_used: int
+    from_cache: Optional[bool] = None  # Whether this result was served from cache
+    status: Optional[str] = None  # Result status: 'success' if results found, 'no_results' if none
     category: Optional[str] = None  # Optional category field for news searches
 
 
