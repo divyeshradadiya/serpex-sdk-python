@@ -165,20 +165,13 @@ class SerpexClient:
         if len(params.q) > 500:
             raise ValueError("Query too long (max 500 characters)")
 
-        category = params.category or "web"
         endpoint = "/api/search"
 
-        # Prepare request parameters with only supported params
+        # Prepare request parameters
         request_params = {
             "q": params.q,
             "engine": params.engine or "auto",
-            "format": params.format or "json",
         }
-
-        # Add category + time_range for the search
-        if category == "web":
-            request_params["category"] = "web"
-            request_params["time_range"] = params.time_range or "all"
 
         data = self._make_request(request_params, endpoint=endpoint)
 
@@ -194,10 +187,6 @@ class SerpexClient:
             query=data["query"],
             engines=data["engines"],
             results=results,
-            answers=data.get("answers", []),
-            corrections=data.get("corrections", []),
-            infoboxes=data.get("infoboxes", []),
-            suggestions=data.get("suggestions", []),
         )
 
     def extract(self, params: Union[ExtractParams, Dict[str, Any]]) -> ExtractResponse:

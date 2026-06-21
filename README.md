@@ -143,34 +143,7 @@ class SearchParams:
 
     # Optional: Engine selection (defaults to 'auto')
     engine: Optional[str] = 'auto'
-
-    # Optional: Search category ('web' for general search, 'news' for news articles - always returns latest news)
-    category: Optional[str] = 'web'  # Supports: 'web', 'news'
-
-    # Optional: Time range filter (only applicable for 'web' category, ignored for 'news')
-    time_range: Optional[str] = 'all'
-
-    # Optional: Response format
-    format: Optional[str] = 'json'
 ```
-
-### News Search Example
-
-News search always returns the latest news articles. The `time_range` parameter is ignored for news searches.
-
-```python
-# Search for latest news articles
-news_results = client.search({
-    'q': 'artificial intelligence',
-    'engine': 'google',
-    'category': 'news'  # Always returns latest news
-})
-
-print(news_results.results[0].title)
-print(news_results.results[0].published_date)
-```
-
-````
 
 ## Supported Engines
 
@@ -186,17 +159,22 @@ print(news_results.results[0].published_date)
 
 ```python
 @dataclass
+class SearchMetadata:
+    number_of_results: int
+    response_time: int
+    timestamp: str
+    credits_used: int
+    from_cache: Optional[bool] = None
+    status: Optional[str] = None
+
+@dataclass
 class SearchResponse:
     metadata: SearchMetadata
     id: str
     query: str
     engines: List[str]
     results: List[SearchResult]
-    answers: List[Any]
-    corrections: List[str]
-    infoboxes: List[Any]
-    suggestions: List[str]
-````
+```
 
 ## Error Handling
 
@@ -221,30 +199,6 @@ except SerpApiException as e:
 results = client.search({
     'q': 'coffee shops near me'
 })
-```
-
-### Advanced Search with Filters
-
-```python
-results = client.search({
-    'q': 'latest AI news',
-    'engine': 'google',
-    'time_range': 'day',
-    'category': 'web'
-})
-```
-
-### Using SearchParams Object
-
-```python
-from serpex import SearchParams
-
-params = SearchParams(
-    q='machine learning',
-    engine='auto',
-    time_range='month'
-)
-results = client.search(params)
 ```
 
 ### Extract Web Content to LLM-Ready Data

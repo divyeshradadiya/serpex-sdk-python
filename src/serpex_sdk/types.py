@@ -31,7 +31,6 @@ class SearchMetadata:
     credits_used: int
     from_cache: Optional[bool] = None  # Whether this result was served from cache
     status: Optional[str] = None  # Result status: 'success' if results found, 'no_results' if none
-    category: Optional[str] = None
 
 
 @dataclass
@@ -43,10 +42,6 @@ class SearchResponse:
     query: str
     engines: List[str]
     results: List[SearchResult]
-    answers: List[Any]
-    corrections: List[str]
-    infoboxes: List[Any]
-    suggestions: List[str]
 
 
 @dataclass
@@ -111,12 +106,3 @@ class SearchParams:
 
     # Optional: Engine selection (defaults to 'auto')
     engine: Optional[str] = "auto"
-
-    # Optional: Search category
-    category: Optional[str] = "web"
-
-    # Optional: Time range filter
-    time_range: Optional[str] = "all"
-
-    # Optional: Response format
-    format: Optional[str] = "json"
