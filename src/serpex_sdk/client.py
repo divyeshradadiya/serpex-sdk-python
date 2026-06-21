@@ -170,7 +170,6 @@ class SerpexClient:
         # Prepare request parameters
         request_params = {
             "q": params.q,
-            "engine": params.engine or "auto",
         }
 
         data = self._make_request(request_params, endpoint=endpoint)

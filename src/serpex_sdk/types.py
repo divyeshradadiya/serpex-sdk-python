@@ -103,6 +103,3 @@ class SearchParams:
 
     # Required: search query
     q: str
-
-    # Optional: Engine selection (defaults to 'auto')
-    engine: Optional[str] = "auto"
