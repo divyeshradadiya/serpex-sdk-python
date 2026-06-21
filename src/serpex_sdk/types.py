@@ -31,7 +31,7 @@ class SearchMetadata:
     credits_used: int
     from_cache: Optional[bool] = None  # Whether this result was served from cache
     status: Optional[str] = None  # Result status: 'success' if results found, 'no_results' if none
-    category: Optional[str] = None  # Optional category field for news searches
+    category: Optional[str] = None
 
 
 @dataclass
@@ -56,6 +56,8 @@ class ExtractResult:
     url: str
     success: bool
     markdown: Optional[str] = None
+    html: Optional[str] = None
+    stealth: Optional[bool] = None
     error: Optional[str] = None
     error_type: Optional[str] = None
     status_code: Optional[int] = None
@@ -74,6 +76,7 @@ class ExtractMetadata:
     credits_used: int
     response_time: int
     timestamp: str
+    cached_free: Optional[int] = None
 
 
 @dataclass
@@ -92,6 +95,12 @@ class ExtractParams:
     # Required: URLs to extract (max 10)
     urls: List[str]
 
+    # Optional: Route through premium unblocker for difficult-to-crawl pages (default: False)
+    stealth: bool = False
+
+    # Optional: Output format — 'markdown' (default) or 'html'
+    format: str = "markdown"
+
 
 @dataclass
 class SearchParams:
@@ -103,10 +112,10 @@ class SearchParams:
     # Optional: Engine selection (defaults to 'auto')
     engine: Optional[str] = "auto"
 
-    # Optional: Search category ('web' for general search, 'news' for news articles - always returns latest news)
-    category: Optional[str] = "web"  # Supports: 'web', 'news'
+    # Optional: Search category
+    category: Optional[str] = "web"
 
-    # Optional: Time range filter (only applicable for 'web' category, ignored for 'news')
+    # Optional: Time range filter
     time_range: Optional[str] = "all"
 
     # Optional: Response format

@@ -165,9 +165,8 @@ class SerpexClient:
         if len(params.q) > 500:
             raise ValueError("Query too long (max 500 characters)")
 
-        # Determine endpoint based on category
         category = params.category or "web"
-        endpoint = "/api/search/news" if category == "news" else "/api/search"
+        endpoint = "/api/search"
 
         # Prepare request parameters with only supported params
         request_params = {
@@ -176,7 +175,7 @@ class SerpexClient:
             "format": params.format or "json",
         }
 
-        # Add category for web search, omit for news (news endpoint doesn't need it)
+        # Add category + time_range for the search
         if category == "web":
             request_params["category"] = "web"
             request_params["time_range"] = params.time_range or "all"
@@ -249,7 +248,13 @@ class SerpexClient:
             raise ValueError(f"Invalid URLs provided: {invalid_urls}")
 
         # Prepare request parameters
-        request_params = {"urls": params.urls}
+        request_params: Dict[str, Any] = {"urls": params.urls}
+
+        if params.stealth:
+            request_params["stealth"] = params.stealth
+
+        if params.format and params.format != "markdown":
+            request_params["format"] = params.format
 
         data = self._make_request(request_params, endpoint="/api/crawl", method="POST")
 

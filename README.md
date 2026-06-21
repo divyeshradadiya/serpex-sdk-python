@@ -57,7 +57,7 @@ SerpexClient(api_key: str, base_url: str = "https://api.serpex.dev")
 Extract content from web pages and convert them to LLM-ready markdown data. Accepts up to 10 URLs per request.
 
 ```python
-# Using dictionary (simple approach)
+# Basic usage
 results = client.extract({
     'urls': [
         'https://example.com',
@@ -65,13 +65,21 @@ results = client.extract({
     ]
 })
 
+# With stealth mode and HTML output
+results = client.extract({
+    'urls': ['https://example.com'],
+    'stealth': True,
+    'format': 'html'
+})
+
 # Using ExtractParams object (type-safe approach)
 from serpex import ExtractParams
 
-params = ExtractParams(urls=[
-    'https://example.com',
-    'https://httpbin.org'
-])
+params = ExtractParams(
+    urls=['https://example.com'],
+    stealth=True,
+    format='html'
+)
 results = client.extract(params)
 ```
 
@@ -84,6 +92,12 @@ The `ExtractParams` dataclass supports extraction parameters:
 class ExtractParams:
     # Required: URLs to extract (max 10)
     urls: List[str]
+
+    # Optional: Route through premium unblocker for difficult-to-crawl pages (default: False)
+    stealth: bool = False
+
+    # Optional: Output format — 'markdown' (default) or 'html'
+    format: str = 'markdown'
 ```
 
 ## Extract Response Format
@@ -100,6 +114,8 @@ class ExtractResult:
     url: str
     success: bool
     markdown: Optional[str] = None
+    html: Optional[str] = None         # Populated when format='html'
+    stealth: Optional[bool] = None     # Whether stealth mode was used for this result
     error: Optional[str] = None
     status_code: Optional[int] = None
 
@@ -112,6 +128,7 @@ class ExtractMetadata:
     credits_used: int
     response_time: int
     timestamp: str
+    cached_free: Optional[int] = None  # URLs served from cache (no credit charge)
 ```
 
 ## Search Parameters
@@ -235,7 +252,7 @@ results = client.search(params)
 #### Extract from a Single URL
 
 ```python
-# Extract content from one website
+# Extract content from one website (markdown, default)
 result = client.extract({
     'urls': ['https://example.com']
 })
@@ -243,6 +260,16 @@ result = client.extract({
 if result.results[0].success:
     print(f"✅ Extracted {len(result.results[0].markdown)} characters")
     print("Markdown content:", result.results[0].markdown[:200] + "...")
+
+# Extract with stealth mode and HTML output
+stealth_result = client.extract({
+    'urls': ['https://example.com'],
+    'stealth': True,
+    'format': 'html'
+})
+
+if stealth_result.results[0].success:
+    print("HTML content:", stealth_result.results[0].html[:200])
 ```
 
 #### Extract from Multiple URLs (up to 10 at once)
@@ -279,6 +306,7 @@ for result in extract_results.results:
             'url': 'https://example.com',
             'success': True,
             'markdown': '# Example Domain\n\nThis domain is for use in...',
+            'stealth': False,
             'status_code': 200
         }
     ],
@@ -288,6 +316,7 @@ for result in extract_results.results:
         'successful_crawls': 1,
         'failed_crawls': 0,
         'credits_used': 3,
+        'cached_free': 0,
         'response_time': 255,
         'timestamp': '2025-11-13T10:30:00.000Z'
     }
