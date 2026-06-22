@@ -15,7 +15,6 @@ class SearchResult:
     snippet: str
     position: int
     engine: str
-    published_date: Optional[str] = None
     img_src: Optional[str] = None
     duration: Optional[str] = None
     score: Optional[float] = None
