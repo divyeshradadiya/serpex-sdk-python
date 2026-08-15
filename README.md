@@ -143,7 +143,20 @@ class SearchParams:
 
     # Optional: Engine selection (defaults to 'auto')
     engine: Optional[str] = 'auto'
+
+    # Optional: also fetch page content (markdown) for top results (default: False)
+    include_content: bool = False
+
+    # Optional: number of top results to fetch content for — must be exactly
+    # 5 or 10 (default: 5). Only relevant when include_content is True.
+    content_results: Literal[5, 10] = 5
 ```
+
+| Param | Type | Default | Notes |
+|---|---|---|---|
+| `q` | `str` | — | Required search query (max 500 chars) |
+| `include_content` | `bool` | `False` | Also fetch page content (markdown) for top results |
+| `content_results` | `Literal[5, 10]` | `5` | How many top results to fetch content for; must be exactly `5` or `10` |
 
 ## Supported Engines
 
@@ -166,6 +179,24 @@ class SearchMetadata:
     credits_used: int
     from_cache: Optional[bool] = None
     status: Optional[str] = None
+    # Present only when include_content was requested
+    content_requested: Optional[int] = None
+    content_delivered: Optional[int] = None
+
+@dataclass
+class SearchResult:
+    title: str
+    url: str
+    snippet: str
+    position: int
+    engine: str
+    img_src: Optional[str] = None
+    duration: Optional[str] = None
+    score: Optional[float] = None
+    # Present only when include_content was requested. Best-effort — a
+    # failed extraction sets content_error instead of content.
+    content: Optional[str] = None
+    content_error: Optional[str] = None
 
 @dataclass
 class SearchResponse:
@@ -199,6 +230,30 @@ except SerpApiException as e:
 results = client.search({
     'q': 'coffee shops near me'
 })
+```
+
+### Search with Page Content
+
+Fetch page content (markdown) for the top results inline with the search —
+best-effort, so check each result for `content` vs `content_error`.
+
+```python
+results = client.search({
+    'q': 'best espresso machines 2025',
+    'include_content': True,
+    'content_results': 10,  # must be exactly 5 or 10
+})
+
+print(
+    f"Content delivered for {results.metadata.content_delivered}/"
+    f"{results.metadata.content_requested} requested results"
+)
+
+for result in results.results:
+    if result.content:
+        print(f"✅ {result.url}: {len(result.content)} chars of markdown")
+    elif result.content_error:
+        print(f"❌ {result.url}: {result.content_error}")
 ```
 
 ### Extract Web Content to LLM-Ready Data
