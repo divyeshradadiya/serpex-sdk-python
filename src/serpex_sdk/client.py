@@ -165,20 +165,40 @@ class SerpexClient:
         if len(params.q) > 500:
             raise ValueError("Query too long (max 500 characters)")
 
+        if params.content_results not in (5, 10):
+            raise ValueError("content_results must be exactly 5 or 10")
+
         endpoint = "/api/search"
 
         # Prepare request parameters
-        request_params = {
+        request_params: Dict[str, Any] = {
             "q": params.q,
         }
+
+        if params.include_content:
+            request_params["include_content"] = params.include_content
+
+        if params.content_results and params.content_results != 5:
+            request_params["content_results"] = params.content_results
 
         data = self._make_request(request_params, endpoint=endpoint)
 
         # Convert response to SearchResponse object
         from .types import SearchResult, SearchMetadata
 
-        metadata = SearchMetadata(**data["metadata"])
-        results = [SearchResult(**result) for result in data["results"]]
+        # Defensive hydration: these dataclasses use strict kwargs, so any
+        # backend response field not yet declared here would raise
+        # TypeError("unexpected keyword argument") and break every installed
+        # SDK the moment the backend ships a new field. Filter incoming keys
+        # down to the dataclass's declared fields first so unknown fields are
+        # silently dropped instead of crashing the caller.
+        metadata = SearchMetadata(
+            **{k: v for k, v in data["metadata"].items() if k in SearchMetadata.__dataclass_fields__}
+        )
+        results = [
+            SearchResult(**{k: v for k, v in result.items() if k in SearchResult.__dataclass_fields__})
+            for result in data["results"]
+        ]
 
         return SearchResponse(
             metadata=metadata,
@@ -246,9 +266,16 @@ class SerpexClient:
 
         data = self._make_request(request_params, endpoint="/api/crawl", method="POST")
 
-        # Convert response to ExtractResponse object
-        metadata = ExtractMetadata(**data["metadata"])
-        results = [ExtractResult(**result) for result in data["results"]]
+        # Convert response to ExtractResponse object.
+        # Same defensive filtering as search() — see comment there — so an
+        # unrecognized backend field can't crash hydration here either.
+        metadata = ExtractMetadata(
+            **{k: v for k, v in data["metadata"].items() if k in ExtractMetadata.__dataclass_fields__}
+        )
+        results = [
+            ExtractResult(**{k: v for k, v in result.items() if k in ExtractResult.__dataclass_fields__})
+            for result in data["results"]
+        ]
 
         return ExtractResponse(
             success=data["success"],

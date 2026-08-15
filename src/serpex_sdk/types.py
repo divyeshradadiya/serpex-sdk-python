@@ -2,7 +2,7 @@
 Type definitions for the Serpex SERP API Python SDK.
 """
 
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any, Union, Literal
 from dataclasses import dataclass
 
 
@@ -18,6 +18,12 @@ class SearchResult:
     img_src: Optional[str] = None
     duration: Optional[str] = None
     score: Optional[float] = None
+    # Present only when include_content was requested. Best-effort per-URL
+    # extraction: a successful fetch sets content, a failed one sets
+    # content_error instead — mutually exclusive, both absent when content
+    # wasn't requested for this result.
+    content: Optional[str] = None
+    content_error: Optional[str] = None
 
 
 @dataclass
@@ -30,6 +36,9 @@ class SearchMetadata:
     credits_used: int
     from_cache: Optional[bool] = None  # Whether this result was served from cache
     status: Optional[str] = None  # Result status: 'success' if results found, 'no_results' if none
+    # Present only when include_content was requested.
+    content_requested: Optional[int] = None
+    content_delivered: Optional[int] = None
 
 
 @dataclass
@@ -102,3 +111,10 @@ class SearchParams:
 
     # Required: search query
     q: str
+
+    # Optional: also fetch page content (markdown) for top results (default: False)
+    include_content: bool = False
+
+    # Optional: number of top results to fetch content for — must be exactly
+    # 5 or 10 (default: 5). Only relevant when include_content is True.
+    content_results: Literal[5, 10] = 5
