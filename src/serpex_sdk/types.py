@@ -3,7 +3,7 @@ Type definitions for the Serpex SERP API Python SDK.
 """
 
 from typing import List, Optional, Dict, Any, Union, Literal
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -61,7 +61,19 @@ class ExtractResult:
     markdown: Optional[str] = None
     html: Optional[str] = None
     stealth: Optional[bool] = None
+    #: Human-readable failure reason, e.g. "target returned HTTP 404".
     error: Optional[str] = None
+    #: Stable machine-readable failure code (stealth extractions only).
+    #: Separates a problem with YOUR url from a problem on OUR side:
+    #:   stealth_target_unreachable   - domain did not resolve / refused us
+    #:   stealth_target_status        - page answered with an error status
+    #:   stealth_target_empty         - 200 with no usable body (anti-bot page)
+    #:   stealth_timeout              - page did not finish rendering in time
+    #:   stealth_provider_unavailable - our unblocker was unavailable: retry
+    #:   stealth_network              - network error reaching our unblocker
+    #:   stealth_unconfigured         - stealth not enabled on this deployment
+    error_code: Optional[str] = None
+    #: Failure category, shared by normal and stealth extraction.
     error_type: Optional[str] = None
     status_code: Optional[int] = None
     crawled_at: Optional[str] = None
@@ -118,3 +130,47 @@ class SearchParams:
     # Optional: number of top results to fetch content for — must be exactly
     # 5 or 10 (default: 5). Only relevant when include_content is True.
     content_results: Literal[5, 10] = 5
+
+
+@dataclass
+class UsageParams:
+    """Parameters for usage requests."""
+
+    # Optional: how many days of history to summarise (default: 30)
+    days: int = 30
+
+
+@dataclass
+class UsageStatistics:
+    """Request counts over the requested period."""
+
+    totalRequests: int = 0
+    successfulRequests: int = 0
+    failedRequests: int = 0
+    #: Requests per search engine over the period.
+    engineStats: Dict[str, int] = field(default_factory=dict)
+
+
+@dataclass
+class UsageCredits:
+    """Workspace credit position."""
+
+    #: Credits remaining on the workspace.
+    balance: int = 0
+    #: Credits consumed to date.
+    totalUsed: Optional[int] = None
+
+
+@dataclass
+class UsageResponse:
+    """Usage statistics and credit balance for an API key."""
+
+    #: Name of the API key the request was made with.
+    api_key: str
+    organization_id: str
+    period_days: int
+    statistics: UsageStatistics
+    credits: UsageCredits
+    #: The 10 most recent requests, newest first. Shape is intentionally loose —
+    #: these are diagnostic records and may gain fields without a major version.
+    recent_requests: List[Dict[str, Any]] = field(default_factory=list)

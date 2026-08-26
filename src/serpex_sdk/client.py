@@ -13,6 +13,10 @@ from .types import (
     ExtractParams,
     ExtractResult,
     ExtractMetadata,
+    UsageParams,
+    UsageResponse,
+    UsageStatistics,
+    UsageCredits,
 )
 from .exceptions import SerpApiException
 
@@ -281,4 +285,57 @@ class SerpexClient:
             success=data["success"],
             results=results,
             metadata=metadata,
+        )
+
+    def usage(self, params: Union[UsageParams, Dict[str, Any], None] = None) -> UsageResponse:
+        """
+        Fetch usage statistics and the current credit balance for this API key.
+
+        Useful for checking your remaining balance before a large batch, or for
+        surfacing consumption in your own dashboard.
+
+        Args:
+            params: Optional UsageParams (or dict) with `days` of history to
+                summarise (default: 30).
+
+        Returns:
+            UsageResponse with per-engine request counts and the credit balance.
+
+        Raises:
+            ValueError: If `days` is not a positive integer.
+            SerpApiException: If the API returns an error.
+        """
+        if params is None:
+            days = None
+        elif isinstance(params, dict):
+            days = params.get("days")
+        else:
+            days = params.days
+
+        request_params: Dict[str, Any] = {}
+        if days is not None:
+            if not isinstance(days, int) or isinstance(days, bool) or days < 1:
+                raise ValueError("days must be a positive integer")
+            request_params["days"] = days
+
+        data = self._make_request(request_params, endpoint="/api/usage")
+
+        # Same defensive filtering as search()/extract(): an unrecognized
+        # backend field must never crash hydration.
+        statistics = UsageStatistics(
+            **{k: v for k, v in (data.get("statistics") or {}).items()
+               if k in UsageStatistics.__dataclass_fields__}
+        )
+        credits = UsageCredits(
+            **{k: v for k, v in (data.get("credits") or {}).items()
+               if k in UsageCredits.__dataclass_fields__}
+        )
+
+        return UsageResponse(
+            api_key=data.get("api_key", ""),
+            organization_id=data.get("organization_id", ""),
+            period_days=data.get("period_days", 0),
+            statistics=statistics,
+            credits=credits,
+            recent_requests=data.get("recent_requests") or [],
         )

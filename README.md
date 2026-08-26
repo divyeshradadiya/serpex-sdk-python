@@ -207,6 +207,47 @@ class SearchResponse:
     results: List[SearchResult]
 ```
 
+## Usage & credit balance
+
+Check your credit balance and request history — useful before a large batch.
+
+```python
+usage = client.usage()                 # last 30 days
+week  = client.usage({"days": 7})
+
+print(usage.credits.balance)           # credits remaining
+print(usage.statistics.totalRequests)  # requests in the period
+print(usage.statistics.engineStats)    # {"duckduckgo": 120, "yahoo": 30}
+```
+
+## Stealth error codes
+
+When `stealth=True`, a failed result carries a stable `error_code` alongside the
+human-readable `error`. Branch on the code rather than parsing the message — it
+tells you whether the problem is with **your URL** or with **our service**:
+
+| `error_code` | `error_type` | Meaning | Retry? |
+|---|---|---|---|
+| `stealth_target_unreachable` | `connection` | The domain did not resolve or refused the connection — the site is likely gone | No |
+| `stealth_target_status` | `http` | The page answered with an error status (see `status_code`) | No |
+| `stealth_target_empty` | `blocked` | The page answered `200` with no usable body — typically an anti-bot interstitial | Maybe |
+| `stealth_timeout` | `timeout` | The page did not finish rendering in time | Yes |
+| `stealth_provider_unavailable` | `server_error` | **Our** unblocking provider was unavailable — not a problem with your URL | Yes |
+| `stealth_network` | `connection` | Network error reaching our unblocker | Yes |
+| `stealth_unconfigured` | `server_error` | Stealth is not enabled on this deployment | No |
+
+```python
+response = client.extract({"urls": urls, "stealth": True})
+
+for r in response.results:
+    if r.success:
+        continue
+    if r.error_code == "stealth_target_unreachable":
+        pass  # The domain is dead — drop it from your list.
+    elif r.error_code == "stealth_provider_unavailable":
+        pass  # Our side. Safe to retry shortly.
+```
+
 ## Error Handling
 
 The SDK raises `SerpApiException` for API errors:
