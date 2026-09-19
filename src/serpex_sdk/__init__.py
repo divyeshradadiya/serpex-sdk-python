@@ -6,7 +6,23 @@ Official Python SDK for the Serpex SERP API - Fetch search results in JSON forma
 
 from .client import SerpexClient
 from .exceptions import SerpApiException
-from .types import SearchParams, SearchResponse, ExtractParams, ExtractResponse
+from .types import (
+    SearchParams,
+    SearchResponse,
+    ExtractParams,
+    ExtractResponse,
+    UsageParams,
+    UsageResponse,
+)
 
-__version__ = "2.9.0"
-__all__ = ["SerpexClient", "SerpApiException", "SearchParams", "SearchResponse"]
+__version__ = "2.10.1"
+__all__ = [
+    "SerpexClient",
+    "SerpApiException",
+    "SearchParams",
+    "SearchResponse",
+    "ExtractParams",
+    "ExtractResponse",
+    "UsageParams",
+    "UsageResponse",
+]
