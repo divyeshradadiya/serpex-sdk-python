@@ -204,11 +204,11 @@ Check your credit balance and request history — useful before a large batch.
 
 ```python
 usage = client.usage()                 # last 30 days
-week  = client.usage({"days": 7})
+week  = client.usage({"days": 7})     # 1-90 (larger values are capped at 90)
 
 print(usage.credits.balance)           # credits remaining
 print(usage.statistics.totalRequests)  # requests in the period
-print(usage.statistics.engineStats)    # {"duckduckgo": 120, "yahoo": 30}
+print(usage.statistics.engineStats)    # {"search": 120, "crawl": 30, "stealth": 5}
 ```
 
 ## Stealth error codes
