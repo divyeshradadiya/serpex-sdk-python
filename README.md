@@ -22,16 +22,13 @@ from serpex import SerpexClient
 # Initialize the client with your API key
 client = SerpexClient('your-api-key-here')
 
-# Search with auto-routing (recommended for simple use cases)
-results = client.search({
-    'q': 'python tutorial',
-    'engine': 'auto'
-})
+# Every search is auto-routed to the best available source
+results = client.search({'q': 'python tutorial'})
 
 # Or using SearchParams object for type safety
 from serpex import SearchParams
 
-params = SearchParams(q='python tutorial', engine='auto')
+params = SearchParams(q='python tutorial')
 results = client.search(params)
 
 print(results.results[0].title)
@@ -141,9 +138,6 @@ class SearchParams:
     # Required: search query
     q: str
 
-    # Optional: Engine selection (defaults to 'auto')
-    engine: Optional[str] = 'auto'
-
     # Optional: also fetch page content (markdown) for top results (default: False)
     include_content: bool = False
 
@@ -158,15 +152,12 @@ class SearchParams:
 | `include_content` | `bool` | `False` | Also fetch page content (markdown) for top results |
 | `content_results` | `Literal[5, 10]` | `5` | How many top results to fetch content for; must be exactly `5` or `10` |
 
-## Supported Engines
+## Engine selection
 
-- **auto**: Automatically routes to the best available search engine
-- **google**: Google's primary search engine
-- **bing**: Microsoft's search engine
-- **duckduckgo**: Privacy-focused search engine
-- **brave**: Privacy-first search engine
-- **yahoo**: Yahoo search engine
-- **yandex**: Russian search engine
+There is none — every search is automatically routed to the best available
+source, with fallback. The legacy `engine` / `engines` parameters are
+deprecated and ignored by the API; requests that still send them get a
+`Deprecation` response header.
 
 ## Response Format
 
