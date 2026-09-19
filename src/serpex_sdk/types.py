@@ -147,7 +147,7 @@ class UsageStatistics:
     totalRequests: int = 0
     successfulRequests: int = 0
     failedRequests: int = 0
-    #: Requests per search engine over the period.
+    #: Requests per product over the period: search, crawl, stealth (only those used).
     engineStats: Dict[str, int] = field(default_factory=dict)
 
 
