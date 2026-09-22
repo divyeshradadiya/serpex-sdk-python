@@ -1,7 +1,8 @@
 """
-Type definitions for the Serpex SERP API Python SDK.
+Type definitions for the Serpex Python SDK.
 """
 
+import warnings
 from typing import List, Optional, Dict, Any, Union, Literal
 from dataclasses import dataclass, field
 
@@ -14,6 +15,7 @@ class SearchResult:
     url: str
     snippet: str
     position: int
+    # Legacy field kept for compatibility — Serpex is a single engine.
     engine: str
     img_src: Optional[str] = None
     duration: Optional[str] = None
@@ -48,6 +50,7 @@ class SearchResponse:
     metadata: SearchMetadata
     id: str
     query: str
+    # Legacy field kept for compatibility — Serpex is a single engine.
     engines: List[str]
     results: List[SearchResult]
 
@@ -67,10 +70,10 @@ class ExtractResult:
     #: Separates a problem with YOUR url from a problem on OUR side:
     #:   stealth_target_unreachable   - domain did not resolve / refused us
     #:   stealth_target_status        - page answered with an error status
-    #:   stealth_target_empty         - 200 with no usable body (anti-bot page)
+    #:   stealth_target_empty         - 200 with no usable content
     #:   stealth_timeout              - page did not finish rendering in time
-    #:   stealth_provider_unavailable - our unblocker was unavailable: retry
-    #:   stealth_network              - network error reaching our unblocker
+    #:   stealth_provider_unavailable - our stealth extraction service was unavailable: retry
+    #:   stealth_network              - network error inside our stealth extraction service
     #:   stealth_unconfigured         - stealth not enabled on this deployment
     error_code: Optional[str] = None
     #: Failure category, shared by normal and stealth extraction.
@@ -110,7 +113,7 @@ class ExtractParams:
     # Required: URLs to extract (max 10)
     urls: List[str]
 
-    # Optional: Route through premium unblocker for difficult-to-crawl pages (default: False)
+    # Optional: premium extraction mode for pages that standard extraction can't read (default: False)
     stealth: bool = False
 
     # Optional: Output format — 'markdown' (default) or 'html'
@@ -130,6 +133,20 @@ class SearchParams:
     # Optional: number of top results to fetch content for — must be exactly
     # 5 or 10 (default: 5). Only relevant when include_content is True.
     content_results: Literal[5, 10] = 5
+
+    # Deprecated: ignored by the API since 2026-06 (Serpex is a single search
+    # engine). Still accepted so existing code keeps working; not sent.
+    engine: Optional[str] = None
+    engines: Optional[Any] = None
+
+    def __post_init__(self) -> None:
+        if self.engine is not None or self.engines is not None:
+            warnings.warn(
+                "SearchParams 'engine'/'engines' are deprecated and ignored by the "
+                "Serpex API; remove them from your call.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
 
 
 @dataclass
