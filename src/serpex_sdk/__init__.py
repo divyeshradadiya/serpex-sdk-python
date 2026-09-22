@@ -1,7 +1,8 @@
 """
-Serpex SERP API Python SDK
+Serpex Python SDK
 
-Official Python SDK for the Serpex SERP API - Fetch search results in JSON format.
+Official Python SDK for Serpex — a real-time web search API with page content
+extraction (extract).
 """
 
 from .client import SerpexClient
@@ -15,7 +16,7 @@ from .types import (
     UsageResponse,
 )
 
-__version__ = "2.10.2"
+__version__ = "2.10.3"
 __all__ = [
     "SerpexClient",
     "SerpApiException",

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "serpex"
-version = "2.10.2"
-description = "Official Python SDK for Serpex Search API - Fetch search results in JSON format"
+version = "2.10.3"
+description = "Official Python SDK for Serpex — real-time web search API and page content extraction for AI agents, LLM and RAG apps"
 authors = [
     {name = "Serpex Team", email = "support@serpex.dev"}
 ]
@@ -26,7 +26,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-keywords = ["serp", "search", "api", "google", "search-results", "seo", "python", "sdk"]
+keywords = ["serpex", "search", "search-api", "web-search", "real-time-search", "serp", "extract", "ai-agents", "llm", "rag", "python", "sdk"]
 dependencies = [
     "requests>=2.25.0",
     "typing-extensions>=4.0.0; python_version<'3.10'",

@@ -1,5 +1,5 @@
 """
-Main client for the Serpex SERP API Python SDK.
+Main client for the Serpex Python SDK.
 """
 
 import requests
@@ -23,10 +23,10 @@ from .exceptions import SerpApiException
 
 class SerpexClient:
     """
-    Official Python client for the Serpex SERP API.
+    Official Python client for Serpex — a real-time web search API.
 
-    Provides methods to interact with the Serpex SERP API for fetching
-    search results in JSON format from Google, Bing, DuckDuckGo, and Brave.
+    ``search()`` returns real-time web results as JSON; ``extract()`` turns
+    URLs into LLM-ready markdown or HTML; ``usage()`` reports credits.
     """
 
     def __init__(self, api_key: str, base_url: str = "https://api.serpex.dev"):
@@ -144,10 +144,12 @@ class SerpexClient:
 
     def search(self, params: Union[SearchParams, Dict[str, Any]]) -> SearchResponse:
         """
-        Search using the SERP API.
+        Run a real-time web search.
 
         Args:
-            params: SearchParams object or dictionary with query and options
+            params: SearchParams object or dictionary with query and options.
+                ``engine`` / ``engines`` are deprecated: still accepted, ignored,
+                and not sent to the API.
 
         Returns:
             SearchResponse object with results
@@ -299,7 +301,8 @@ class SerpexClient:
                 summarise (default: 30).
 
         Returns:
-            UsageResponse with per-engine request counts and the credit balance.
+            UsageResponse with per-product request counts (``engineStats``) and
+            the credit balance.
 
         Raises:
             ValueError: If `days` is not a positive integer.

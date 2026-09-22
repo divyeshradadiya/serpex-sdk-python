@@ -5,10 +5,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="serpex",
-    version="2.10.2",
+    version="2.10.3",
     author="Serpex Team",
     author_email="support@serpex.dev",
-    description="Official Python SDK for Serpex SERP API - Fetch search results in JSON format",
+    description="Official Python SDK for Serpex — real-time web search API and page content extraction for AI agents, LLM and RAG apps",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/divyeshradadiya/serpex-sdk-python",
@@ -43,7 +43,7 @@ setup(
             "flake8>=4.0.0",
         ],
     },
-    keywords="serp search api google search-results seo python sdk",
+    keywords="serpex search search-api web-search real-time-search serp extract ai-agents llm rag python sdk",
     project_urls={
         "Bug Reports": "https://github.com/divyeshradadiya/serpex-sdk-python/issues",
         "Source": "https://github.com/divyeshradadiya/serpex-sdk-python",

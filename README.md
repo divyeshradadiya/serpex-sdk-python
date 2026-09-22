@@ -1,6 +1,8 @@
 # serpex
 
-Official Python SDK for the Serpex SERP API - Fetch search results in JSON format.
+Official Python SDK for Serpex — a real-time web search API, plus page content
+extraction (`extract`) that turns any URL into LLM-ready markdown. Built for AI
+agents, LLM tools and RAG pipelines.
 
 ## Installation
 
@@ -22,7 +24,7 @@ from serpex import SerpexClient
 # Initialize the client with your API key
 client = SerpexClient('your-api-key-here')
 
-# Every search is auto-routed to the best available source
+# One search engine — no engine to pick
 results = client.search({'q': 'python tutorial'})
 
 # Or using SearchParams object for type safety
@@ -90,7 +92,7 @@ class ExtractParams:
     # Required: URLs to extract (max 10)
     urls: List[str]
 
-    # Optional: Route through premium unblocker for difficult-to-crawl pages (default: False)
+    # Optional: premium extraction mode for pages that standard extraction can't read (default: False)
     stealth: bool = False
 
     # Optional: Output format — 'markdown' (default) or 'html'
@@ -152,12 +154,15 @@ class SearchParams:
 | `include_content` | `bool` | `False` | Also fetch page content (markdown) for top results |
 | `content_results` | `Literal[5, 10]` | `5` | How many top results to fetch content for; must be exactly `5` or `10` |
 
-## Engine selection
+## The `engine` parameter (deprecated)
 
-There is none — every search is automatically routed to the best available
-source, with fallback. The legacy `engine` / `engines` parameters are
-deprecated and ignored by the API; requests that still send them get a
-`Deprecation` response header.
+Serpex is one search engine, so there is nothing to select. The legacy
+`engine` / `engines` request parameters are deprecated and ignored by the API
+(since 2026-06); requests that still send them get a `Deprecation` response
+header. `SearchParams(engine=...)` and `client.search({'q': ..., 'engine': ...})`
+are still accepted so existing code keeps working — the SDK emits a
+`DeprecationWarning` and does not send the value. The `engines` / `engine`
+response fields remain for compatibility.
 
 ## Response Format
 
@@ -221,10 +226,10 @@ tells you whether the problem is with **your URL** or with **our service**:
 |---|---|---|---|
 | `stealth_target_unreachable` | `connection` | The domain did not resolve or refused the connection — the site is likely gone | No |
 | `stealth_target_status` | `http` | The page answered with an error status (see `status_code`) | No |
-| `stealth_target_empty` | `blocked` | The page answered `200` with no usable body — typically an anti-bot interstitial | Maybe |
+| `stealth_target_empty` | `blocked` | The page answered `200` with no usable content | Maybe |
 | `stealth_timeout` | `timeout` | The page did not finish rendering in time | Yes |
-| `stealth_provider_unavailable` | `server_error` | **Our** unblocking provider was unavailable — not a problem with your URL | Yes |
-| `stealth_network` | `connection` | Network error reaching our unblocker | Yes |
+| `stealth_provider_unavailable` | `server_error` | **Our** stealth extraction service was unavailable — not a problem with your URL | Yes |
+| `stealth_network` | `connection` | Network error inside our stealth extraction service | Yes |
 | `stealth_unconfigured` | `server_error` | Stealth is not enabled on this deployment | No |
 
 ```python
