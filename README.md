@@ -1,8 +1,10 @@
 # serpex
 
-Official Python SDK for Serpex — a real-time web search API, plus page content
-extraction (`extract`) that turns any URL into LLM-ready markdown. Built for AI
-agents, LLM tools and RAG pipelines.
+Official Python SDK for Serpex.
+
+Serpex is a web search API and extract API for AI agents. Search returns ranked web results,
+optionally with page content as markdown; Extract turns known URLs into clean markdown.
+Serpex runs its own search engine.
 
 ## Installation
 

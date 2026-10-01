@@ -31,7 +31,7 @@ class SerpexClient:
 
     def __init__(self, api_key: str, base_url: str = "https://api.serpex.dev"):
         """
-        Initialize the SERP API client.
+        Initialize the Serpex API client.
 
         Args:
             api_key: Your API key from the Serpex dashboard

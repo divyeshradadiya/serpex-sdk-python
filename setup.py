@@ -5,10 +5,10 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="serpex",
-    version="2.10.3",
+    version="2.10.4",
     author="Serpex Team",
     author_email="support@serpex.dev",
-    description="Official Python SDK for Serpex — real-time web search API and page content extraction for AI agents, LLM and RAG apps",
+    description="Official Python SDK for Serpex — web search API and extract API for AI agents: ranked web results, optionally with page content as markdown",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/divyeshradadiya/serpex-sdk-python",

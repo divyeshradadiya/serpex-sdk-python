@@ -65,4 +65,4 @@ def test_search_without_engine_does_not_warn():
 
 
 def test_version():
-    assert serpex.__version__ == "2.10.3"
+    assert serpex.__version__ == "2.10.4"
