@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "serpex"
-version = "2.10.4"
+version = "2.11.0"
 description = "Official Python SDK for Serpex — web search API and extract API for AI agents: ranked web results, optionally with page content as markdown"
 authors = [
     {name = "Serpex Team", email = "support@serpex.dev"}

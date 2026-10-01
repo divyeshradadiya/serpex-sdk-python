@@ -164,7 +164,9 @@ Serpex is one search engine, so there is nothing to select. The legacy
 header. `SearchParams(engine=...)` and `client.search({'q': ..., 'engine': ...})`
 are still accepted so existing code keeps working — the SDK emits a
 `DeprecationWarning` and does not send the value. The `engines` / `engine`
-response fields remain for compatibility.
+response fields are deprecated too: they are always `"auto"` today, are optional
+in the SDK (defaults `["auto"]` / `None`), and may be removed from responses in a
+later API version, so don't build logic on them.
 
 ## Response Format
 
@@ -180,6 +182,10 @@ class SearchMetadata:
     # Present only when include_content was requested
     content_requested: Optional[int] = None
     content_delivered: Optional[int] = None
+    # Present only when status == "no_results"
+    no_results_verified: Optional[bool] = None
+    charged: Optional[bool] = None
+    message: Optional[str] = None
 
 @dataclass
 class SearchResult:
@@ -187,7 +193,7 @@ class SearchResult:
     url: str
     snippet: str
     position: int
-    engine: str
+    engine: Optional[str] = None  # deprecated, always "auto"
     img_src: Optional[str] = None
     duration: Optional[str] = None
     score: Optional[float] = None
@@ -201,13 +207,16 @@ class SearchResponse:
     metadata: SearchMetadata
     id: str
     query: str
-    engines: List[str]
-    results: List[SearchResult]
+    engines: List[str] = ["auto"]  # deprecated
+    results: List[SearchResult] = []
+    message: Optional[str] = None  # present only when no results were found
 ```
 
 ## Usage & credit balance
 
 Check your credit balance and request history — useful before a large batch.
+Statistics and credits cover your whole organization (every API key in it);
+`usage.api_key` is the NAME of the key that made the call.
 
 ```python
 usage = client.usage()                 # last 30 days
@@ -215,8 +224,16 @@ week  = client.usage({"days": 7})     # 1-90 (larger values are capped at 90)
 
 print(usage.credits.balance)           # credits remaining
 print(usage.statistics.totalRequests)  # requests in the period
+print(usage.statistics.noResultsRequests)  # zero-result searches in the period
 print(usage.statistics.engineStats)    # {"search": 120, "crawl": 30, "stealth": 5}
 ```
+
+## Timeouts
+
+Each call waits longer than the server's own budget for it, so the SDK never gives
+up on a request the server still finishes and bills: 60 s search, 100 s search
+with `include_content`, 100 s extract, 120 s stealth extract. Override every
+call with `SerpexClient(api_key, timeout=45)`.
 
 ## Stealth error codes
 

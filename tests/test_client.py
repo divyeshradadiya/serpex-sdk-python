@@ -65,4 +65,67 @@ def test_search_without_engine_does_not_warn():
 
 
 def test_version():
-    assert serpex.__version__ == "2.10.4"
+    assert serpex.__version__ == "2.11.0"
+
+
+def test_user_agent_names_sdk_and_version():
+    client = SerpexClient("test-key", base_url="https://example.invalid")
+    assert client.session.headers["User-Agent"] == "serpex-python/2.11.0"
+
+
+def test_response_without_deprecated_engine_fields_parses():
+    global RESPONSE
+    saved = RESPONSE
+    RESPONSE = {
+        "metadata": {"number_of_results": 1, "response_time": 1, "timestamp": "t",
+                     "credits_used": 1},
+        "id": "x",
+        "query": "hello",
+        "results": [{"title": "T", "url": "https://a.example", "snippet": "s",
+                     "position": 1}],
+    }
+    try:
+        result = _client([]).search({"q": "hello"})
+    finally:
+        RESPONSE = saved
+    assert result.engines == ["auto"]
+    assert result.results[0].engine is None
+    assert result.results[0].title == "T"
+
+
+def test_no_results_fields_are_parsed():
+    global RESPONSE
+    saved = RESPONSE
+    RESPONSE = {
+        "metadata": {"number_of_results": 0, "response_time": 1, "timestamp": "t",
+                     "credits_used": 0, "status": "no_results",
+                     "no_results_verified": True, "charged": False, "message": "m"},
+        "id": "x",
+        "query": "hello",
+        "engines": ["auto"],
+        "results": [],
+        "message": "No results found",
+    }
+    try:
+        result = _client([]).search({"q": "hello"})
+    finally:
+        RESPONSE = saved
+    assert result.message == "No results found"
+    assert result.metadata.charged is False
+    assert result.metadata.no_results_verified is True
+
+
+def test_include_content_is_sent_with_longer_timeout():
+    sent = []
+    _client(sent).search({"q": "hello", "include_content": True, "content_results": 10})
+    method, url, kwargs = sent[0]
+    assert "include_content=True" in url and "content_results=10" in url
+    assert kwargs["timeout"] >= 60
+
+
+def test_timeout_override_applies_to_every_call():
+    sent = []
+    client = _client(sent)
+    client.timeout = 5
+    client.search({"q": "hello"})
+    assert sent[0][2]["timeout"] == 5

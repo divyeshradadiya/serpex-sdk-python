@@ -1,9 +1,11 @@
 """
 Serpex Python SDK
 
-Official Python SDK for Serpex — a real-time web search API with page content
-extraction (extract).
+Official Python SDK for Serpex — the web search API and extract API for AI agents.
 """
+
+# Defined before the submodule imports: client.py reads it for the User-Agent.
+__version__ = "2.11.0"
 
 from .client import SerpexClient
 from .exceptions import SerpApiException
@@ -16,7 +18,6 @@ from .types import (
     UsageResponse,
 )
 
-__version__ = "2.10.4"
 __all__ = [
     "SerpexClient",
     "SerpApiException",

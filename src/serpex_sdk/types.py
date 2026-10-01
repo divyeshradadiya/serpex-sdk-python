@@ -15,8 +15,9 @@ class SearchResult:
     url: str
     snippet: str
     position: int
-    # Legacy field kept for compatibility — Serpex is a single engine.
-    engine: str
+    #: Deprecated: always "auto" today and may be removed from responses in a
+    #: later API version. Optional so a response without it can't crash parsing.
+    engine: Optional[str] = None
     img_src: Optional[str] = None
     duration: Optional[str] = None
     score: Optional[float] = None
@@ -41,6 +42,10 @@ class SearchMetadata:
     # Present only when include_content was requested.
     content_requested: Optional[int] = None
     content_delivered: Optional[int] = None
+    # Present only when status == "no_results".
+    no_results_verified: Optional[bool] = None
+    charged: Optional[bool] = None
+    message: Optional[str] = None
 
 
 @dataclass
@@ -50,9 +55,12 @@ class SearchResponse:
     metadata: SearchMetadata
     id: str
     query: str
-    # Legacy field kept for compatibility — Serpex is a single engine.
-    engines: List[str]
-    results: List[SearchResult]
+    #: Deprecated: always ["auto"] today and may be removed from responses in a
+    #: later API version. Defaults to ["auto"] when absent.
+    engines: List[str] = field(default_factory=lambda: ["auto"])
+    results: List[SearchResult] = field(default_factory=list)
+    #: Present only when no results were found.
+    message: Optional[str] = None
 
 
 @dataclass
@@ -79,7 +87,9 @@ class ExtractResult:
     #: Failure category, shared by normal and stealth extraction.
     error_type: Optional[str] = None
     status_code: Optional[int] = None
+    #: Deprecated: never returned by the API; always None. Removed in 3.0.
     crawled_at: Optional[str] = None
+    #: Deprecated: never returned by the API; always None. Removed in 3.0.
     extraction_mode: Optional[str] = None
 
 
@@ -94,7 +104,10 @@ class ExtractMetadata:
     credits_used: int
     response_time: int
     timestamp: str
+    #: URLs served free as a same-workspace repeat (present only when > 0).
     cached_free: Optional[int] = None
+    #: True when the request used stealth extraction.
+    stealth: Optional[bool] = None
 
 
 @dataclass
@@ -153,7 +166,7 @@ class SearchParams:
 class UsageParams:
     """Parameters for usage requests."""
 
-    # Optional: how many days of history to summarise (default: 30)
+    # Optional: how many days of history to summarise, 1-90 (default: 30)
     days: int = 30
 
 
@@ -164,6 +177,8 @@ class UsageStatistics:
     totalRequests: int = 0
     successfulRequests: int = 0
     failedRequests: int = 0
+    #: Zero-result searches (also counted in successfulRequests). 0 when absent.
+    noResultsRequests: int = 0
     #: Requests per product over the period: search, crawl, stealth (only those used).
     engineStats: Dict[str, int] = field(default_factory=dict)
 
@@ -180,9 +195,10 @@ class UsageCredits:
 
 @dataclass
 class UsageResponse:
-    """Usage statistics and credit balance for an API key."""
+    """Usage statistics and credit balance for the organization that owns the API key."""
 
-    #: Name of the API key the request was made with.
+    #: NAME of the API key the request was made with (not the key itself).
+    #: Statistics and credits cover the whole organization, not only this key.
     api_key: str
     organization_id: str
     period_days: int

@@ -6,6 +6,8 @@ import requests
 from typing import Optional, Dict, Any, Union
 from urllib.parse import urlencode
 
+from . import __version__
+
 from .types import (
     SearchResponse,
     SearchParams,
@@ -20,22 +22,41 @@ from .types import (
 )
 from .exceptions import SerpApiException
 
+# Client-side timeouts (seconds). Each is longer than the server's own budget
+# for that request, so the client never gives up on a request the server
+# still finishes and bills: plain search 30 s upstream, search with
+# include_content 45 s, extract 55 s, stealth extract 80 s plus up to 15 s
+# queue. Cloudflare closes origin responses at ~100 s.
+SEARCH_TIMEOUT = 60
+SEARCH_CONTENT_TIMEOUT = 100
+EXTRACT_TIMEOUT = 100
+STEALTH_EXTRACT_TIMEOUT = 120
+
 
 class SerpexClient:
     """
-    Official Python client for Serpex — a real-time web search API.
+    Official Python client for Serpex — the web search API and extract API for AI agents.
 
     ``search()`` returns real-time web results as JSON; ``extract()`` turns
     URLs into LLM-ready markdown or HTML; ``usage()`` reports credits.
     """
 
-    def __init__(self, api_key: str, base_url: str = "https://api.serpex.dev"):
+    def __init__(
+        self,
+        api_key: str,
+        base_url: str = "https://api.serpex.dev",
+        timeout: Optional[float] = None,
+    ):
         """
         Initialize the Serpex API client.
 
         Args:
             api_key: Your API key from the Serpex dashboard
             base_url: Base URL for the API (optional, defaults to production)
+            timeout: Request timeout in seconds for every call. When omitted,
+                each call uses a default sized above the server's own budget:
+                60 s search, 100 s search with include_content, 100 s extract,
+                120 s stealth extract.
 
         Raises:
             ValueError: If api_key is not provided or is not a string
@@ -45,16 +66,22 @@ class SerpexClient:
 
         self.api_key = api_key
         self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
         self.session = requests.Session()
         self.session.headers.update(
             {
                 "Authorization": f"Bearer {self.api_key}",
                 "Content-Type": "application/json",
+                "User-Agent": f"serpex-python/{__version__}",
             }
         )
 
     def _make_request(
-        self, params: Dict[str, Any], endpoint: str = "/api/search", method: str = "GET"
+        self,
+        params: Dict[str, Any],
+        endpoint: str = "/api/search",
+        method: str = "GET",
+        timeout: float = SEARCH_TIMEOUT,
     ) -> Dict[str, Any]:
         """
         Make an authenticated request to the API.
@@ -63,6 +90,7 @@ class SerpexClient:
             params: Query parameters for GET, or body data for POST
             endpoint: API endpoint
             method: HTTP method ("GET" or "POST")
+            timeout: Per-call default; ``self.timeout`` overrides it when set
 
         Returns:
             JSON response data
@@ -71,11 +99,12 @@ class SerpexClient:
             SerpApiException: For API errors
         """
         url = f"{self.base_url}{endpoint}"
+        timeout = self.timeout if self.timeout is not None else timeout
 
         try:
             if method.upper() == "POST":
                 # For POST requests, send params as JSON body
-                response = self.session.post(url, json=params, timeout=30)
+                response = self.session.post(url, json=params, timeout=timeout)
             else:
                 # For GET requests, send params as query parameters
                 # Filter out None values and prepare query parameters
@@ -91,7 +120,7 @@ class SerpexClient:
                 # Build query string
                 query_string = urlencode(filtered_params, doseq=True)
                 final_url = f"{url}?{query_string}" if query_string else url
-                response = self.session.get(final_url, timeout=30)
+                response = self.session.get(final_url, timeout=timeout)
 
             return self._handle_response(response)
         except requests.RequestException as e:
@@ -187,7 +216,11 @@ class SerpexClient:
         if params.content_results and params.content_results != 5:
             request_params["content_results"] = params.content_results
 
-        data = self._make_request(request_params, endpoint=endpoint)
+        data = self._make_request(
+            request_params,
+            endpoint=endpoint,
+            timeout=SEARCH_CONTENT_TIMEOUT if params.include_content else SEARCH_TIMEOUT,
+        )
 
         # Convert response to SearchResponse object
         from .types import SearchResult, SearchMetadata
@@ -203,15 +236,17 @@ class SerpexClient:
         )
         results = [
             SearchResult(**{k: v for k, v in result.items() if k in SearchResult.__dataclass_fields__})
-            for result in data["results"]
+            for result in data.get("results") or []
         ]
 
         return SearchResponse(
             metadata=metadata,
             id=data["id"],
             query=data["query"],
-            engines=data["engines"],
+            # Deprecated response field: tolerate its removal server-side.
+            engines=data.get("engines", ["auto"]),
             results=results,
+            message=data.get("message"),
         )
 
     def extract(self, params: Union[ExtractParams, Dict[str, Any]]) -> ExtractResponse:
@@ -270,7 +305,12 @@ class SerpexClient:
         if params.format and params.format != "markdown":
             request_params["format"] = params.format
 
-        data = self._make_request(request_params, endpoint="/api/crawl", method="POST")
+        data = self._make_request(
+            request_params,
+            endpoint="/api/crawl",
+            method="POST",
+            timeout=STEALTH_EXTRACT_TIMEOUT if params.stealth else EXTRACT_TIMEOUT,
+        )
 
         # Convert response to ExtractResponse object.
         # Same defensive filtering as search() — see comment there — so an
@@ -291,14 +331,15 @@ class SerpexClient:
 
     def usage(self, params: Union[UsageParams, Dict[str, Any], None] = None) -> UsageResponse:
         """
-        Fetch usage statistics and the current credit balance for this API key.
+        Fetch usage statistics and the credit balance for your whole organization
+        (every API key in it, not only the key making the call).
 
         Useful for checking your remaining balance before a large batch, or for
         surfacing consumption in your own dashboard.
 
         Args:
             params: Optional UsageParams (or dict) with `days` of history to
-                summarise (default: 30).
+                summarise, 1-90 (default: 30; larger values are capped at 90).
 
         Returns:
             UsageResponse with per-product request counts (``engineStats``) and
