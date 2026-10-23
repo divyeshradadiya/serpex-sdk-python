@@ -1,0 +1,20 @@
+{
+  "success": true,
+  "results": [
+    {
+      "url": "https://example.com",
+      "success": true,
+      "markdown": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.\n",
+      "status_code": 200
+    }
+  ],
+  "metadata": {
+    "total_urls": 1,
+    "processed_urls": 1,
+    "successful_crawls": 1,
+    "failed_crawls": 0,
+    "credits_used": 1,
+    "response_time": 1813,
+    "timestamp": "2026-10-23T06:27:59.174Z"
+  }
+}

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "serpex"
-version = "2.11.0"
+version = "2.11.1"
 description = "Official Python SDK for Serpex — web search API and extract API for AI agents: ranked web results, optionally with page content as markdown"
 authors = [
     {name = "Serpex Team", email = "support@serpex.dev"}
@@ -43,3 +43,8 @@ where = ["src"]
 
 [tool.setuptools.package-dir]
 "" = "src"
+
+# PEP 561: ship the inline type hints to type checkers.
+[tool.setuptools.package-data]
+serpex = ["py.typed"]
+serpex_sdk = ["py.typed"]

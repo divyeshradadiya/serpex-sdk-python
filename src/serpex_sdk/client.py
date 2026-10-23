@@ -2,9 +2,12 @@
 Main client for the Serpex Python SDK.
 """
 
-import requests
-from typing import Optional, Dict, Any, Union
+import warnings
+from dataclasses import fields as dataclass_fields
+from typing import Optional, Dict, Any, Union, Type, TypeVar
 from urllib.parse import urlencode
+
+import requests
 
 from . import __version__
 
@@ -20,7 +23,90 @@ from .types import (
     UsageStatistics,
     UsageCredits,
 )
-from .exceptions import SerpApiException
+from .exceptions import (
+    SerpApiException,
+    AuthenticationError,
+    InsufficientCreditsError,
+    RateLimitError,
+    ValidationError,
+)
+
+_P = TypeVar("_P")
+
+#: Stealth mode ends at this instant; from then the API answers stealth=True with HTTP 410.
+STEALTH_END_DATE = "2026-11-01T00:00:00Z"
+
+# One warning per process for each of these, not one per call.
+_warned_ignored_params = False
+_warned_stealth = False
+
+_STATUS_MESSAGES = {
+    400: "Bad request",
+    401: "Invalid or missing API key",
+    402: "Insufficient credits",
+    403: "Not included in your plan",
+    404: "Not found",
+    410: "No longer available",
+    429: "Rate limit exceeded",
+    500: "Internal server error",
+    502: "Extraction service error",
+    503: "Temporarily unavailable",
+    504: "Timed out upstream",
+}
+
+_STATUS_EXCEPTIONS = {
+    400: ValidationError,
+    401: AuthenticationError,
+    402: InsufficientCreditsError,
+    429: RateLimitError,
+}
+
+
+def _error_message(body: Any, status: int) -> str:
+    """The API's error text, never a dict repr; a status default when there is none."""
+    if isinstance(body, dict):
+        error = body.get("error")
+        if isinstance(error, str) and error:
+            # Framework 404s put the useful text in `message`; `error` is "Not Found".
+            if status == 404 and isinstance(body.get("message"), str) and body["message"]:
+                return body["message"]
+            return error
+        if isinstance(error, dict) and isinstance(error.get("message"), str) and error["message"]:
+            return error["message"]
+        if isinstance(body.get("message"), str) and body["message"]:
+            return body["message"]
+    return _STATUS_MESSAGES.get(status, f"Serpex API error (HTTP {status})")
+
+
+def _retry_after_ms(response: requests.Response) -> Optional[int]:
+    raw = response.headers.get("Retry-After") if response.headers is not None else None
+    try:
+        return int(float(raw) * 1000) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _coerce_params(params: Union[_P, Dict[str, Any]], cls: Type[_P], method: str) -> _P:
+    """Build the params dataclass from a dict, dropping keys the API does not read.
+
+    Older code passes options the API ignores (category, time_range, num, ...).
+    Those used to raise TypeError; now they are dropped with one DeprecationWarning
+    per process. engine/engines keep their own warning in SearchParams.
+    """
+    global _warned_ignored_params
+    if not isinstance(params, dict):
+        return params
+    known = {f.name for f in dataclass_fields(cls)}  # type: ignore[arg-type]  # cls is a params dataclass
+    ignored = sorted(k for k in params if k not in known and params[k] is not None)
+    if ignored and not _warned_ignored_params:
+        _warned_ignored_params = True
+        warnings.warn(
+            f"{method}() option(s) {', '.join(ignored)} are ignored by the Serpex API and "
+            "are not sent. Remove them.",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+    return cls(**{k: v for k, v in params.items() if k in known})
 
 # Client-side timeouts (seconds). Each is longer than the server's own budget
 # for that request, so the client never gives up on a request the server
@@ -123,8 +209,17 @@ class SerpexClient:
                 response = self.session.get(final_url, timeout=timeout)
 
             return self._handle_response(response)
+        except requests.Timeout as e:
+            raise SerpApiException(
+                f"Request timed out after {timeout} s",
+                details={"error": "timeout", "timeout": timeout},
+                retryable=True,
+            ) from e
         except requests.RequestException as e:
-            raise SerpApiException(f"Request failed: {str(e)}")
+            # DNS, connection reset, TLS: nothing reached the API, safe to retry.
+            raise SerpApiException(
+                f"Request failed: {str(e)}", details={"error": "network"}, retryable=True
+            ) from e
 
     def _handle_response(self, response: requests.Response) -> Dict[str, Any]:
         """
@@ -139,32 +234,22 @@ class SerpexClient:
         Raises:
             SerpApiException: For various API errors
         """
-        if response.status_code == 401:
-            raise SerpApiException("Invalid API key", status_code=401)
-        elif response.status_code == 402:
-            raise SerpApiException("Insufficient credits", status_code=402)
-        elif response.status_code == 429:
-            raise SerpApiException("Rate limit exceeded", status_code=429)
-        elif response.status_code == 400:
+        if not response.ok:
+            status = response.status_code
             try:
                 data = response.json()
-                raise SerpApiException(
-                    data.get("error", "Validation error"), status_code=400, details=data
-                )
             except ValueError:
-                raise SerpApiException("Bad request", status_code=400)
-        elif not response.ok:
-            try:
-                data = response.json()
-                raise SerpApiException(
-                    data.get("error", f"API error: {response.reason}"),
-                    status_code=response.status_code,
-                    details=data,
-                )
-            except ValueError:
-                raise SerpApiException(
-                    f"API error: {response.reason}", status_code=response.status_code
-                )
+                # Not JSON (e.g. a CDN error page).
+                data = {"error": response.reason or f"HTTP {status}"}
+            if not isinstance(data, dict):
+                data = {"error": str(data)}
+            exc_class = _STATUS_EXCEPTIONS.get(status, SerpApiException)
+            raise exc_class(
+                _error_message(data, status),
+                status_code=status,
+                details=data,
+                retry_after_ms=_retry_after_ms(response),
+            )
 
         try:
             return response.json()
@@ -187,9 +272,8 @@ class SerpexClient:
             ValueError: If query is not provided
             SerpApiException: For API errors
         """
-        # Convert dict to SearchParams if needed
-        if isinstance(params, dict):
-            params = SearchParams(**params)
+        # Convert dict to SearchParams if needed; unknown keys are dropped.
+        params = _coerce_params(params, SearchParams, "search")
 
         # Validate required parameters
         if not params.q or not isinstance(params.q, str) or not params.q.strip():
@@ -251,7 +335,12 @@ class SerpexClient:
 
     def extract(self, params: Union[ExtractParams, Dict[str, Any]]) -> ExtractResponse:
         """
-        Extract content from web pages.
+        Extract content from 1 to 10 web pages as markdown (default) or HTML.
+
+        Each URL succeeds or fails on its own (``results[i].success``); failed
+        URLs carry ``error`` and ``error_type`` and are never charged.
+        ``stealth=True`` is deprecated: stealth mode ends on 2026-11-01, after
+        which the API answers it with HTTP 410.
 
         Args:
             params: ExtractParams object or dictionary with URLs to extract
@@ -263,9 +352,8 @@ class SerpexClient:
             ValueError: If URLs are not provided or invalid
             SerpApiException: For API errors
         """
-        # Convert dict to ExtractParams if needed
-        if isinstance(params, dict):
-            params = ExtractParams(**params)
+        # Convert dict to ExtractParams if needed; unknown keys are dropped.
+        params = _coerce_params(params, ExtractParams, "extract")
 
         # Validate required parameters
         if (
@@ -301,6 +389,15 @@ class SerpexClient:
 
         if params.stealth:
             request_params["stealth"] = params.stealth
+            global _warned_stealth
+            if not _warned_stealth:
+                _warned_stealth = True
+                warnings.warn(
+                    "Stealth mode ends on 2026-11-01. From that date extract(stealth=True) "
+                    "is rejected with HTTP 410 (not charged). Send the request without stealth.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
 
         if params.format and params.format != "markdown":
             request_params["format"] = params.format
@@ -382,4 +479,5 @@ class SerpexClient:
             statistics=statistics,
             credits=credits,
             recent_requests=data.get("recent_requests") or [],
+            effective_days=data.get("effective_days"),
         )

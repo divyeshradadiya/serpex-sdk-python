@@ -1,0 +1,6 @@
+{
+  "error": "Invalid URLs provided",
+  "invalid_urls": [
+    "not a url"
+  ]
+}

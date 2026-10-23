@@ -1,0 +1,4 @@
+{
+  "error": "Query parameter (q or query) is required",
+  "example": "/api/search?q=javascript"
+}

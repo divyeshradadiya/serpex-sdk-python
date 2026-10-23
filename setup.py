@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="serpex",
-    version="2.11.0",
+    version="2.11.1",
     author="Serpex Team",
     author_email="support@serpex.dev",
     description="Official Python SDK for Serpex — web search API and extract API for AI agents: ranked web results, optionally with page content as markdown",
@@ -14,6 +14,7 @@ setup(
     url="https://github.com/divyeshradadiya/serpex-sdk-python",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
+    package_data={"serpex": ["py.typed"], "serpex_sdk": ["py.typed"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
