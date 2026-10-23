@@ -2,9 +2,9 @@
 
 Official Python SDK for Serpex.
 
-Serpex is a web search API and extract API for AI agents. Search returns ranked web results,
-optionally with page content as markdown; Extract turns known URLs into clean markdown.
-Serpex runs its own search engine.
+Serpex is a real-time web search API and extract API for AI agents. Search returns ranked web
+results, optionally with page content as markdown; Extract turns known URLs into clean markdown
+or HTML. Every search is routed automatically: there is no engine to choose.
 
 ## Installation
 
@@ -12,180 +12,71 @@ Serpex runs its own search engine.
 pip install serpex
 ```
 
-Or with poetry:
-
-```bash
-poetry add serpex
-```
-
 ## Quick Start
 
 ```python
-from serpex import SerpexClient
+from serpex import SerpexClient, SearchParams
 
-# Initialize the client with your API key
-client = SerpexClient('your-api-key-here')
+client = SerpexClient("your-api-key-here")
 
-# One search engine — no engine to pick
-results = client.search({'q': 'python tutorial'})
-
-# Or using SearchParams object for type safety
-from serpex import SearchParams
-
-params = SearchParams(q='python tutorial')
-results = client.search(params)
+results = client.search({"q": "python tutorial"})
+# or, typed:
+results = client.search(SearchParams(q="python tutorial"))
 
 print(results.results[0].title)
+print(results.metadata.credits_used)
 ```
 
-## API Reference
-
-### SerpexClient
-
-#### Constructor
+## SerpexClient
 
 ```python
-SerpexClient(api_key: str, base_url: str = "https://api.serpex.dev")
+SerpexClient(api_key: str, base_url: str = "https://api.serpex.dev", timeout: float | None = None)
 ```
 
-- `api_key`: Your API key from the Serpex dashboard
-- `base_url`: Optional base URL (defaults to 'https://api.serpex.dev')
+`timeout` (seconds) overrides every call. By default each call waits longer than the server's
+own budget for it: 60 s search, 100 s search with `include_content`, 100 s extract, 120 s
+stealth extract. Every request sends `User-Agent: serpex-python/<version>`.
 
-#### Methods
-
-##### `extract(params: ExtractParams | Dict[str, Any]) -> ExtractResponse`
-
-Extract content from web pages and convert them to LLM-ready markdown data. Accepts up to 10 URLs per request.
-
-```python
-# Basic usage
-results = client.extract({
-    'urls': [
-        'https://example.com',
-        'https://httpbin.org'
-    ]
-})
-
-# With stealth mode and HTML output
-results = client.extract({
-    'urls': ['https://example.com'],
-    'stealth': True,
-    'format': 'html'
-})
-
-# Using ExtractParams object (type-safe approach)
-from serpex import ExtractParams
-
-params = ExtractParams(
-    urls=['https://example.com'],
-    stealth=True,
-    format='html'
-)
-results = client.extract(params)
-```
-
-## Extract Parameters
-
-The `ExtractParams` dataclass supports extraction parameters:
-
-```python
-@dataclass
-class ExtractParams:
-    # Required: URLs to extract (max 10)
-    urls: List[str]
-
-    # Optional: premium extraction mode for pages that standard extraction can't read (default: False)
-    stealth: bool = False
-
-    # Optional: Output format — 'markdown' (default) or 'html'
-    format: str = 'markdown'
-```
-
-## Extract Response Format
-
-```python
-@dataclass
-class ExtractResponse:
-    success: bool
-    results: List[ExtractResult]
-    metadata: ExtractMetadata
-
-@dataclass
-class ExtractResult:
-    url: str
-    success: bool
-    markdown: Optional[str] = None
-    html: Optional[str] = None         # Populated when format='html'
-    stealth: Optional[bool] = None     # Whether stealth mode was used for this result
-    error: Optional[str] = None
-    status_code: Optional[int] = None
-
-@dataclass
-class ExtractMetadata:
-    total_urls: int
-    processed_urls: int
-    successful_crawls: int
-    failed_crawls: int
-    credits_used: int
-    response_time: int
-    timestamp: str
-    cached_free: Optional[int] = None  # URLs served from cache (no credit charge)
-```
-
-## Search Parameters
-
-The `SearchParams` dataclass supports all search parameters:
+## Search
 
 ```python
 @dataclass
 class SearchParams:
-    # Required: search query
-    q: str
-
-    # Optional: also fetch page content (markdown) for top results (default: False)
-    include_content: bool = False
-
-    # Optional: number of top results to fetch content for — must be exactly
-    # 5 or 10 (default: 5). Only relevant when include_content is True.
+    q: str                          # required, 1-500 characters
+    include_content: bool = False   # also fetch page content (markdown) for the top results
     content_results: Literal[5, 10] = 5
+    engine: Optional[str] = None    # deprecated: ignored by the API, not sent
+    engines: Optional[Any] = None   # deprecated: ignored by the API, not sent
 ```
 
-| Param | Type | Default | Notes |
-|---|---|---|---|
-| `q` | `str` | — | Required search query (max 500 chars) |
-| `include_content` | `bool` | `False` | Also fetch page content (markdown) for top results |
-| `content_results` | `Literal[5, 10]` | `5` | How many top results to fetch content for; must be exactly `5` or `10` |
-
-## The `engine` parameter (deprecated)
-
-Serpex is one search engine, so there is nothing to select. The legacy
-`engine` / `engines` request parameters are deprecated and ignored by the API
-(since 2026-06); requests that still send them get a `Deprecation` response
-header. `SearchParams(engine=...)` and `client.search({'q': ..., 'engine': ...})`
-are still accepted so existing code keeps working — the SDK emits a
-`DeprecationWarning` and does not send the value. The `engines` / `engine`
-response fields are deprecated too: they are always `"auto"` today, are optional
-in the SDK (defaults `["auto"]` / `None`), and may be removed from responses in a
-later API version, so don't build logic on them.
-
-## Response Format
+Only `q`, `include_content` and `content_results` are sent. Search operators go inside `q`:
+`site:`, `-site:`, `after:YYYY-MM-DD` and `before:YYYY-MM-DD`. A dict with other keys (for
+example `category`, `time_range` or `num_results` from older code) still works: those keys are
+dropped with one `DeprecationWarning`.
 
 ```python
 @dataclass
+class SearchResponse:
+    metadata: SearchMetadata
+    id: str
+    query: str
+    engines: List[str] = ["auto"]       # deprecated
+    results: List[SearchResult] = []
+    message: Optional[str] = None       # no_results only
+
+@dataclass
 class SearchMetadata:
     number_of_results: int
-    response_time: int
-    timestamp: str
-    credits_used: int
+    response_time: int                  # ms
+    timestamp: str                      # ISO 8601
+    credits_used: int                   # 0, 1, 3 or 6
     from_cache: Optional[bool] = None
-    status: Optional[str] = None
-    # Present only when include_content was requested
-    content_requested: Optional[int] = None
-    content_delivered: Optional[int] = None
-    # Present only when status == "no_results"
-    no_results_verified: Optional[bool] = None
-    charged: Optional[bool] = None
-    message: Optional[str] = None
+    status: Optional[Literal["success", "no_results"]] = None
+    content_requested: Optional[int] = None    # include_content only (5 or 10)
+    content_delivered: Optional[int] = None    # include_content only
+    no_results_verified: Optional[bool] = None # no_results only
+    charged: Optional[bool] = None             # no_results only
+    message: Optional[str] = None              # no_results only
 
 @dataclass
 class SearchResult:
@@ -193,212 +84,135 @@ class SearchResult:
     url: str
     snippet: str
     position: int
-    engine: Optional[str] = None  # deprecated, always "auto"
+    engine: Optional[str] = None        # deprecated, always "auto"
     img_src: Optional[str] = None
     duration: Optional[str] = None
     score: Optional[float] = None
-    # Present only when include_content was requested. Best-effort — a
-    # failed extraction sets content_error instead of content.
-    content: Optional[str] = None
-    content_error: Optional[str] = None
+    content: Optional[str] = None       # page markdown
+    content_error: Optional[str] = None # why content is missing, e.g. "robots_disallowed"
+```
 
+`content` and `content_error` are mutually exclusive. They exist only with
+`include_content=True`, and only on the first `content_results` results; every other result has
+both set to `None`. `result.has_content` is a shortcut.
+
+A search that finds nothing returns `results == []` with `metadata.status == "no_results"`. It is
+charged (1 credit) only when `metadata.no_results_verified` is true.
+
+```python
+results = client.search({
+    "q": "best espresso machines 2025",
+    "include_content": True,
+    "content_results": 10,
+})
+
+print(f"{results.metadata.content_delivered}/{results.metadata.content_requested} pages delivered")
+for result in results.results:
+    if result.content is not None:
+        print(result.url, len(result.content))
+    elif result.content_error is not None:
+        print(result.url, "no content:", result.content_error)
+```
+
+Credits with `include_content`: 1 when no page came back, 3 for 1-5 pages, 6 for 6-10 pages.
+
+## Extract
+
+```python
 @dataclass
-class SearchResponse:
-    metadata: SearchMetadata
-    id: str
-    query: str
-    engines: List[str] = ["auto"]  # deprecated
-    results: List[SearchResult] = []
-    message: Optional[str] = None  # present only when no results were found
+class ExtractParams:
+    urls: List[str]          # 1-10 absolute URLs
+    format: str = "markdown" # or "html"
+    stealth: bool = False    # deprecated: stealth mode ends on 2026-11-01
 ```
 
-## Usage & credit balance
-
-Check your credit balance and request history — useful before a large batch.
-Statistics and credits cover your whole organization (every API key in it);
-`usage.api_key` is the NAME of the key that made the call.
-
 ```python
-usage = client.usage()                 # last 30 days
-week  = client.usage({"days": 7})     # 1-90 (larger values are capped at 90)
-
-print(usage.credits.balance)           # credits remaining
-print(usage.statistics.totalRequests)  # requests in the period
-print(usage.statistics.noResultsRequests)  # zero-result searches in the period
-print(usage.statistics.engineStats)    # {"search": 120, "crawl": 30, "stealth": 5}
-```
-
-## Timeouts
-
-Each call waits longer than the server's own budget for it, so the SDK never gives
-up on a request the server still finishes and bills: 60 s search, 100 s search
-with `include_content`, 100 s extract, 120 s stealth extract. Override every
-call with `SerpexClient(api_key, timeout=45)`.
-
-## Stealth error codes
-
-When `stealth=True`, a failed result carries a stable `error_code` alongside the
-human-readable `error`. Branch on the code rather than parsing the message — it
-tells you whether the problem is with **your URL** or with **our service**:
-
-| `error_code` | `error_type` | Meaning | Retry? |
-|---|---|---|---|
-| `stealth_target_unreachable` | `connection` | The domain did not resolve or refused the connection — the site is likely gone | No |
-| `stealth_target_status` | `http` | The page answered with an error status (see `status_code`) | No |
-| `stealth_target_empty` | `blocked` | The page answered `200` with no usable content | Maybe |
-| `stealth_timeout` | `timeout` | The page did not finish rendering in time | Yes |
-| `stealth_provider_unavailable` | `server_error` | **Our** stealth extraction service was unavailable — not a problem with your URL | Yes |
-| `stealth_network` | `connection` | Network error inside our stealth extraction service | Yes |
-| `stealth_unconfigured` | `server_error` | Stealth is not enabled on this deployment | No |
-
-```python
-response = client.extract({"urls": urls, "stealth": True})
+response = client.extract({"urls": ["https://example.com", "https://example.com/missing"]})
 
 for r in response.results:
     if r.success:
-        continue
-    if r.error_code == "stealth_target_unreachable":
-        pass  # The domain is dead — drop it from your list.
-    elif r.error_code == "stealth_provider_unavailable":
-        pass  # Our side. Safe to retry shortly.
+        print(r.url, len(r.markdown or ""))
+    else:
+        print(r.url, r.error_type, r.error)   # e.g. "http", "HTTP 404: Not Found"
+
+print(response.metadata.credits_used)          # 1 per extracted URL; failures are free
 ```
 
-## Error Handling
+`ExtractResult`: `url`, `success`, then `markdown` or `html` on success, or `error` and
+`error_type` on failure (always both). `status_code` when known. `error_type` is one of
+`serpex.EXTRACT_ERROR_TYPES`: `timeout`, `connection`, `dns_unresolved`, `ssl_error`, `http`,
+`blocked`, `robots_disallowed`, `server_error`, `unsupported_content_type`, `too_large`,
+`unknown`. `ExtractMetadata`: `total_urls`, `processed_urls`, `successful_crawls`,
+`failed_crawls`, `credits_used`, `response_time`, `timestamp`, plus `cached_free` (free repeats,
+omitted when 0) and `stealth` (stealth requests only).
 
-The SDK raises `SerpApiException` for API errors:
+### Stealth mode (ends 2026-11-01)
+
+`stealth=True` renders the page in a full browser for 5 credits per URL. **It ends on
+2026-11-01.** From that date the API rejects it with HTTP 410 (not charged); send the request
+without `stealth`. The SDK emits one `DeprecationWarning` per process when you use it.
+
+A failed stealth result says `"This page could not be rendered. Not charged."` and may carry an
+`error_code`: `stealth_target_unreachable` (domain gone), `stealth_target_status` (error status,
+see `status_code`), `stealth_target_empty`, `stealth_timeout`, `stealth_network`,
+`stealth_unconfigured`. Failures on our side carry `error_type == "server_error"` without a code
+(`stealth_provider_unavailable` is never returned).
+
+## Usage & credit balance
+
+Statistics and credits cover your whole organization (every API key in it); `usage.api_key` is
+the NAME of the key that made the call. Free (no credits), but it counts against your
+per-second rate limit.
 
 ```python
-from serpex import SerpexClient, SerpApiException
+usage = client.usage()              # last 30 days
+week = client.usage({"days": 7})    # 1-90
+
+print(usage.credits.balance)
+print(usage.effective_days)         # days actually covered (history is kept 30 days)
+print(usage.statistics.engineStats) # {"search": 120, "crawl": 30, "stealth": 5}
+print(usage.recent_requests[0]["status"])  # 10 newest requests, see serpex.RecentRequest
+```
+
+## Errors
+
+Every API error raises `SerpApiException` or a subclass:
+
+| Status | Exception | When | Retry |
+|---|---|---|---|
+| 400 | `ValidationError` | missing or invalid `q`, `include_content`, `content_results`, `urls` or `days` | no |
+| 401 | `AuthenticationError` | missing or invalid API key | no |
+| 402 | `InsufficientCreditsError` | not enough credits (`e.details["remainingCredits"]`) | no |
+| 403 | `SerpApiException` | stealth not included in your plan | no |
+| 410 | `SerpApiException` | stealth after 2026-11-01 | no |
+| 429 | `RateLimitError` | over your per-second limit: 5, 25 or 50 requests/s by plan | yes, after `e.retry_after_ms` |
+| 500, 502, 503, 504 | `SerpApiException` | our side, never charged (`e.request_id` on 500/502) | yes |
+| none | `SerpApiException` | timeout (`e.details["error"] == "timeout"`) or network failure | yes |
+
+Every exception has `status_code`, `details` (the parsed error body), `retryable`,
+`retry_after_ms` and `request_id`. A search with page content counts as more than one request
+toward the rate limit: 2 with `content_results=5`, 3 with `content_results=10`.
+
+```python
+import time
+from serpex import SerpexClient, SerpApiException, RateLimitError, InsufficientCreditsError
 
 try:
-    results = client.search(SearchParams(q='test query'))
+    results = client.search({"q": "test query"})
+except RateLimitError as e:
+    time.sleep((e.retry_after_ms or 1000) / 1000)
+except InsufficientCreditsError as e:
+    print("Out of credits:", e.details.get("remainingCredits"))
 except SerpApiException as e:
-    print(f"API error: {e}")
-    print(f"Status code: {e.status_code}")
-    print(f"Details: {e.details}")
+    print(f"API error {e.status_code}: {e} (retryable={e.retryable})")
 ```
 
-## Examples
+## The `engine` parameter (deprecated)
 
-### Basic Search
-
-```python
-results = client.search({
-    'q': 'coffee shops near me'
-})
-```
-
-### Search with Page Content
-
-Fetch page content (markdown) for the top results inline with the search —
-best-effort, so check each result for `content` vs `content_error`.
-
-```python
-results = client.search({
-    'q': 'best espresso machines 2025',
-    'include_content': True,
-    'content_results': 10,  # must be exactly 5 or 10
-})
-
-print(
-    f"Content delivered for {results.metadata.content_delivered}/"
-    f"{results.metadata.content_requested} requested results"
-)
-
-for result in results.results:
-    if result.content:
-        print(f"✅ {result.url}: {len(result.content)} chars of markdown")
-    elif result.content_error:
-        print(f"❌ {result.url}: {result.content_error}")
-```
-
-### Extract Web Content to LLM-Ready Data
-
-#### Extract from a Single URL
-
-```python
-# Extract content from one website (markdown, default)
-result = client.extract({
-    'urls': ['https://example.com']
-})
-
-if result.results[0].success:
-    print(f"✅ Extracted {len(result.results[0].markdown)} characters")
-    print("Markdown content:", result.results[0].markdown[:200] + "...")
-
-# Extract with stealth mode and HTML output
-stealth_result = client.extract({
-    'urls': ['https://example.com'],
-    'stealth': True,
-    'format': 'html'
-})
-
-if stealth_result.results[0].success:
-    print("HTML content:", stealth_result.results[0].html[:200])
-```
-
-#### Extract from Multiple URLs (up to 10 at once)
-
-```python
-# Extract content from multiple websites (up to 10 URLs)
-extract_results = client.extract({
-    'urls': [
-        'https://example.com',
-        'https://httpbin.org',
-        'https://github.com'
-    ]
-})
-
-print(f"Successfully extracted {extract_results.metadata.successful_crawls} pages")
-print(f"Total credits used: {extract_results.metadata.credits_used}")
-
-for result in extract_results.results:
-    if result.success:
-        print(f"✅ {result.url}: {len(result.markdown)} characters")
-        # Use result.markdown for LLM processing
-    else:
-        print(f"❌ {result.url}: {result.error}")
-```
-
-#### Sample Response
-
-```python
-# Example response structure
-{
-    'success': True,
-    'results': [
-        {
-            'url': 'https://example.com',
-            'success': True,
-            'markdown': '# Example Domain\n\nThis domain is for use in...',
-            'stealth': False,
-            'status_code': 200
-        }
-    ],
-    'metadata': {
-        'total_urls': 1,
-        'processed_urls': 1,
-        'successful_crawls': 1,
-        'failed_crawls': 0,
-        'credits_used': 3,
-        'cached_free': 0,
-        'response_time': 255,
-        'timestamp': '2025-11-13T10:30:00.000Z'
-    }
-}
-```
-
-### Using ExtractParams Object
-
-```python
-from serpex import ExtractParams
-
-params = ExtractParams(urls=[
-    'https://example.com',
-    'https://httpbin.org'
-])
-results = client.extract(params)
-```
+There is nothing to select. `engine` / `engines` are ignored by the API (since 2026-06);
+requests that still send them get a `Deprecation` response header. The SDK still accepts them,
+emits a `DeprecationWarning` and does not send them. The `engines` / `engine` response fields
+are deprecated too: always `"auto"`.
 
 ## Requirements
 

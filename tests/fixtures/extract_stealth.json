@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "results": [
+    {
+      "url": "https://example.com",
+      "success": true,
+      "markdown": "This domain is for use in documentation examples without needing permission. This is not a service; avoid relying on it for testing and monitoring purposes.\n\nهذا النطاق مُخصص للاستخدام في أمثلة التوثيق دون الحاجة إلى إذن. هذه ليست خدمة، يُرجى تجنب الاعتماد عليها لأغراض الاختبار والمراقبة.\n\n该域名仅用于文档示例，无需获得许可。这并非一项服务，请勿将其用于测试和监控目的。\n\nL’usage de ce domaine est réservé à des exemples de documentation, \n…[truncated for fixture]",
+      "stealth": true,
+      "status_code": 200
+    }
+  ],
+  "metadata": {
+    "total_urls": 1,
+    "processed_urls": 1,
+    "successful_crawls": 1,
+    "failed_crawls": 0,
+    "credits_used": 5,
+    "stealth": true,
+    "response_time": 9518,
+    "timestamp": "2026-10-23T06:29:57.608Z"
+  }
+}

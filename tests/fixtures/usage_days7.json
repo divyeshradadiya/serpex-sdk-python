@@ -1,0 +1,162 @@
+{
+  "api_key": "Fixture key",
+  "organization_id": "org_fixture",
+  "period_days": 7,
+  "effective_days": 7,
+  "statistics": {
+    "totalRequests": 95,
+    "successfulRequests": 95,
+    "failedRequests": 0,
+    "noResultsRequests": 2,
+    "engineStats": {
+      "search": 82,
+      "crawl": 13
+    }
+  },
+  "credits": {
+    "balance": 168838,
+    "totalUsed": 31162
+  },
+  "recent_requests": [
+    {
+      "id": 4050480,
+      "organizationId": "org_fixture",
+      "searchEngine": "crawl",
+      "requestedEngine": "crawl",
+      "resultsCount": 1,
+      "status": "success",
+      "responseTime": 4,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:20.984Z"
+    },
+    {
+      "id": 4050479,
+      "organizationId": "org_fixture",
+      "searchEngine": "crawl",
+      "requestedEngine": "crawl",
+      "resultsCount": 3,
+      "status": "success",
+      "responseTime": 6,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:20.898Z"
+    },
+    {
+      "id": 4050478,
+      "organizationId": "org_fixture",
+      "searchEngine": "search",
+      "requestedEngine": "auto",
+      "resultsCount": 7,
+      "status": "success",
+      "responseTime": 6,
+      "fromCache": true,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:20.834Z"
+    },
+    {
+      "id": 4050477,
+      "organizationId": "org_fixture",
+      "searchEngine": "search",
+      "requestedEngine": "auto",
+      "resultsCount": 10,
+      "status": "success",
+      "responseTime": 5,
+      "fromCache": true,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:20.724Z"
+    },
+    {
+      "id": 4050475,
+      "organizationId": "org_fixture",
+      "searchEngine": "crawl",
+      "requestedEngine": "crawl",
+      "resultsCount": 1,
+      "status": "success",
+      "responseTime": 2413,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:20.335Z"
+    },
+    {
+      "id": 4050473,
+      "organizationId": "org_fixture",
+      "searchEngine": "crawl",
+      "requestedEngine": "crawl",
+      "resultsCount": 3,
+      "status": "success",
+      "responseTime": 1282,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:17.857Z"
+    },
+    {
+      "id": 4050465,
+      "organizationId": "org_fixture",
+      "searchEngine": "search",
+      "requestedEngine": "auto",
+      "resultsCount": 7,
+      "status": "success",
+      "responseTime": 2520,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:16.492Z"
+    },
+    {
+      "id": 4050460,
+      "organizationId": "org_fixture",
+      "searchEngine": "search",
+      "requestedEngine": "auto",
+      "resultsCount": 10,
+      "status": "success",
+      "responseTime": 1362,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:10:13.884Z"
+    },
+    {
+      "id": 4049347,
+      "organizationId": "org_fixture",
+      "searchEngine": "crawl",
+      "requestedEngine": "crawl",
+      "resultsCount": 3,
+      "status": "success",
+      "responseTime": 1584,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:04:31.994Z"
+    },
+    {
+      "id": 4048704,
+      "organizationId": "org_fixture",
+      "searchEngine": "search",
+      "requestedEngine": "auto",
+      "resultsCount": 7,
+      "status": "success",
+      "responseTime": 1874,
+      "fromCache": false,
+      "contentRequested": false,
+      "contentPagesRequested": null,
+      "contentPagesDelivered": null,
+      "createdAt": "2026-10-23T05:00:42.249Z"
+    }
+  ]
+}
