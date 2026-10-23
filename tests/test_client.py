@@ -65,12 +65,12 @@ def test_search_without_engine_does_not_warn():
 
 
 def test_version():
-    assert serpex.__version__ == "2.11.1"
+    assert serpex.__version__ == "2.12.0"
 
 
 def test_user_agent_names_sdk_and_version():
     client = SerpexClient("test-key", base_url="https://example.invalid")
-    assert client.session.headers["User-Agent"] == "serpex-python/2.11.1"
+    assert client.session.headers["User-Agent"] == "serpex-python/2.12.0"
 
 
 def test_response_without_deprecated_engine_fields_parses():

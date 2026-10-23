@@ -5,7 +5,7 @@ Official Python SDK for Serpex — the web search API and extract API for AI age
 """
 
 # Defined before the submodule imports: client.py reads it for the User-Agent.
-__version__ = "2.11.1"
+__version__ = "2.12.0"
 
 from .client import SerpexClient, STEALTH_END_DATE
 from .exceptions import (
