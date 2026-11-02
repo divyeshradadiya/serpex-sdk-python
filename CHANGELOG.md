@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.13.0 — 2026-11-02
+
+- Removed the `stealth` option. It ended 1 Nov 2026; the API answers 410 to older versions that send it.
+
 ## 2.12.0 — 2026-10-23
 
 Errors and types now match the API exactly (checked against the backend and live responses). Minor release: errors now raise status-specific subclasses (still `SerpApiException`), otherwise additive.

@@ -34,8 +34,7 @@ SerpexClient(api_key: str, base_url: str = "https://api.serpex.dev", timeout: fl
 ```
 
 `timeout` (seconds) overrides every call. By default each call waits longer than the server's
-own budget for it: 60 s search, 100 s search with `include_content`, 100 s extract, 120 s
-stealth extract. Every request sends `User-Agent: serpex-python/<version>`.
+own budget for it: 60 s search, 100 s search with `include_content`, 100 s extract. Every request sends `User-Agent: serpex-python/<version>`.
 
 ## Search
 
@@ -123,7 +122,6 @@ Credits with `include_content`: 1 when no page came back, 3 for 1-5 pages, 6 for
 class ExtractParams:
     urls: List[str]          # 1-10 absolute URLs
     format: str = "markdown" # or "html"
-    stealth: bool = False    # deprecated: stealth mode ends on 2026-11-01
 ```
 
 ```python
@@ -144,19 +142,7 @@ print(response.metadata.credits_used)          # 1 per extracted URL; failures a
 `blocked`, `robots_disallowed`, `server_error`, `unsupported_content_type`, `too_large`,
 `unknown`. `ExtractMetadata`: `total_urls`, `processed_urls`, `successful_crawls`,
 `failed_crawls`, `credits_used`, `response_time`, `timestamp`, plus `cached_free` (free repeats,
-omitted when 0) and `stealth` (stealth requests only).
-
-### Stealth mode (ends 2026-11-01)
-
-`stealth=True` renders the page in a full browser for 5 credits per URL. **It ends on
-2026-11-01.** From that date the API rejects it with HTTP 410 (not charged); send the request
-without `stealth`. The SDK emits one `DeprecationWarning` per process when you use it.
-
-A failed stealth result says `"This page could not be rendered. Not charged."` and may carry an
-`error_code`: `stealth_target_unreachable` (domain gone), `stealth_target_status` (error status,
-see `status_code`), `stealth_target_empty`, `stealth_timeout`, `stealth_network`,
-`stealth_unconfigured`. Failures on our side carry `error_type == "server_error"` without a code
-(`stealth_provider_unavailable` is never returned).
+omitted when 0).
 
 ## Usage & credit balance
 
@@ -170,7 +156,7 @@ week = client.usage({"days": 7})    # 1-90
 
 print(usage.credits.balance)
 print(usage.effective_days)         # days actually covered (history is kept 30 days)
-print(usage.statistics.engineStats) # {"search": 120, "crawl": 30, "stealth": 5}
+print(usage.statistics.engineStats) # {"search": 120, "crawl": 30}
 print(usage.recent_requests[0]["status"])  # 10 newest requests, see serpex.RecentRequest
 ```
 
@@ -183,8 +169,6 @@ Every API error raises `SerpApiException` or a subclass:
 | 400 | `ValidationError` | missing or invalid `q`, `include_content`, `content_results`, `urls` or `days` | no |
 | 401 | `AuthenticationError` | missing or invalid API key | no |
 | 402 | `InsufficientCreditsError` | not enough credits (`e.details["remainingCredits"]`) | no |
-| 403 | `SerpApiException` | stealth not included in your plan | no |
-| 410 | `SerpApiException` | stealth after 2026-11-01 | no |
 | 429 | `RateLimitError` | over your per-second limit: 5, 25 or 50 requests/s by plan | yes, after `e.retry_after_ms` |
 | 500, 502, 503, 504 | `SerpApiException` | our side, never charged (`e.request_id` on 500/502) | yes |
 | none | `SerpApiException` | timeout (`e.details["error"] == "timeout"`) or network failure | yes |

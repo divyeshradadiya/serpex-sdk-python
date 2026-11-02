@@ -153,26 +153,6 @@
     "source": "live api.serpex.dev 2026-10-23",
     "note": "per-URL failure, not charged"
   },
-  "extract_stealth": {
-    "status": 200,
-    "headers": {
-      "content-type": "application/json; charset=utf-8",
-      "x-ratelimit-limit": "5",
-      "x-ratelimit-remaining": "4"
-    },
-    "request": {
-      "method": "POST",
-      "path": "/api/crawl",
-      "body": {
-        "urls": [
-          "https://example.com"
-        ],
-        "stealth": true
-      }
-    },
-    "source": "live api.serpex.dev 2026-10-23",
-    "note": "stealth (ends 2026-11-01), 5 credits"
-  },
   "usage": {
     "status": 200,
     "headers": {
@@ -482,22 +462,6 @@
     "source": "backend origin/main 4d0bea6 apiController.ts:1201-1206 + creditCache.ts:281",
     "note": "exact body from code; not triggered live"
   },
-  "error_403_stealth_not_in_plan": {
-    "status": 403,
-    "headers": {
-      "content-type": "application/json; charset=utf-8"
-    },
-    "source": "backend origin/main 4d0bea6 apiController.ts:1171, planService.ts:190",
-    "note": "exact body from code; not triggered live"
-  },
-  "error_410_stealth_ended": {
-    "status": 410,
-    "headers": {
-      "content-type": "application/json; charset=utf-8"
-    },
-    "source": "backend origin/main 4d0bea6 apiController.ts:1157-1160, stealthEnd.ts:13",
-    "note": "exact body from code; not triggered live"
-  },
   "error_500_search": {
     "status": 500,
     "headers": {
@@ -522,14 +486,6 @@
     "source": "backend origin/main 4d0bea6 apiController.ts:754-763",
     "note": "exact body from code; not triggered live"
   },
-  "error_503_stealth_busy": {
-    "status": 503,
-    "headers": {
-      "content-type": "application/json; charset=utf-8"
-    },
-    "source": "backend origin/main 4d0bea6 apiController.ts:1256-1259",
-    "note": "exact body from code; not triggered live"
-  },
   "error_504_extract": {
     "status": 504,
     "headers": {
@@ -537,5 +493,13 @@
     },
     "source": "backend origin/main 4d0bea6 apiController.ts:1299-1303",
     "note": "exact body from code; not triggered live"
+  },
+  "error_410_gone": {
+    "status": 410,
+    "headers": {
+      "content-type": "application/json; charset=utf-8"
+    },
+    "source": "neutral 410 body",
+    "note": "API answers 410 with {error, retryable:false}; not triggered live"
   }
 }

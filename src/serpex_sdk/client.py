@@ -33,12 +33,8 @@ from .exceptions import (
 
 _P = TypeVar("_P")
 
-#: Stealth mode ends at this instant; from then the API answers stealth=True with HTTP 410.
-STEALTH_END_DATE = "2026-11-01T00:00:00Z"
-
 # One warning per process for each of these, not one per call.
 _warned_ignored_params = False
-_warned_stealth = False
 
 _STATUS_MESSAGES = {
     400: "Bad request",
@@ -111,12 +107,10 @@ def _coerce_params(params: Union[_P, Dict[str, Any]], cls: Type[_P], method: str
 # Client-side timeouts (seconds). Each is longer than the server's own budget
 # for that request, so the client never gives up on a request the server
 # still finishes and bills: plain search 30 s upstream, search with
-# include_content 45 s, extract 55 s, stealth extract 80 s plus up to 15 s
-# queue. Cloudflare closes origin responses at ~100 s.
+# include_content 45 s, extract 55 s. Cloudflare closes origin responses at ~100 s.
 SEARCH_TIMEOUT = 60
 SEARCH_CONTENT_TIMEOUT = 100
 EXTRACT_TIMEOUT = 100
-STEALTH_EXTRACT_TIMEOUT = 120
 
 
 class SerpexClient:
@@ -141,8 +135,7 @@ class SerpexClient:
             base_url: Base URL for the API (optional, defaults to production)
             timeout: Request timeout in seconds for every call. When omitted,
                 each call uses a default sized above the server's own budget:
-                60 s search, 100 s search with include_content, 100 s extract,
-                120 s stealth extract.
+                60 s search, 100 s search with include_content, 100 s extract.
 
         Raises:
             ValueError: If api_key is not provided or is not a string
@@ -339,8 +332,6 @@ class SerpexClient:
 
         Each URL succeeds or fails on its own (``results[i].success``); failed
         URLs carry ``error`` and ``error_type`` and are never charged.
-        ``stealth=True`` is deprecated: stealth mode ends on 2026-11-01, after
-        which the API answers it with HTTP 410.
 
         Args:
             params: ExtractParams object or dictionary with URLs to extract
@@ -387,18 +378,6 @@ class SerpexClient:
         # Prepare request parameters
         request_params: Dict[str, Any] = {"urls": params.urls}
 
-        if params.stealth:
-            request_params["stealth"] = params.stealth
-            global _warned_stealth
-            if not _warned_stealth:
-                _warned_stealth = True
-                warnings.warn(
-                    "Stealth mode ends on 2026-11-01. From that date extract(stealth=True) "
-                    "is rejected with HTTP 410 (not charged). Send the request without stealth.",
-                    DeprecationWarning,
-                    stacklevel=2,
-                )
-
         if params.format and params.format != "markdown":
             request_params["format"] = params.format
 
@@ -406,7 +385,7 @@ class SerpexClient:
             request_params,
             endpoint="/api/crawl",
             method="POST",
-            timeout=STEALTH_EXTRACT_TIMEOUT if params.stealth else EXTRACT_TIMEOUT,
+            timeout=EXTRACT_TIMEOUT,
         )
 
         # Convert response to ExtractResponse object.

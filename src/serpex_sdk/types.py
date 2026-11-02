@@ -96,18 +96,8 @@ class ExtractResult:
     success: bool
     markdown: Optional[str] = None
     html: Optional[str] = None
-    stealth: Optional[bool] = None
     #: Failure only: human-readable reason, e.g. "HTTP 404: Not Found".
     error: Optional[str] = None
-    #: Failure only, stealth extractions only: a stable code.
-    #:   stealth_target_unreachable - domain did not resolve / refused us
-    #:   stealth_target_status      - page answered with an error status
-    #:   stealth_target_empty       - 200 with no usable content
-    #:   stealth_timeout            - page did not finish rendering in time
-    #:   stealth_network, stealth_unconfigured
-    #: Failures on our side carry error_type "server_error" and no code
-    #: ("stealth_provider_unavailable" is never returned).
-    error_code: Optional[str] = None
     #: Failure only, always set: one of EXTRACT_ERROR_TYPES. Branch on this.
     error_type: Optional[str] = None
     status_code: Optional[int] = None
@@ -130,8 +120,6 @@ class ExtractMetadata:
     timestamp: str
     #: URLs served free as a same-workspace repeat (present only when > 0).
     cached_free: Optional[int] = None
-    #: True when the request used stealth extraction.
-    stealth: Optional[bool] = None
 
 
 @dataclass
@@ -149,11 +137,6 @@ class ExtractParams:
 
     # Required: URLs to extract (max 10)
     urls: List[str]
-
-    # Deprecated: stealth mode ends on 2026-11-01. From that date the API rejects
-    # stealth=True with HTTP 410 (not charged). Until then: full-browser render,
-    # 5 credits per URL.
-    stealth: bool = False
 
     # Optional: Output format — 'markdown' (default) or 'html'
     format: str = "markdown"
@@ -205,7 +188,7 @@ class UsageStatistics:
     failedRequests: int = 0
     #: Zero-result searches (also counted in successfulRequests). 0 when absent.
     noResultsRequests: int = 0
-    #: Requests per product over the period: search, crawl, stealth (only those used).
+    #: Requests per product over the period: search, crawl (only those used).
     engineStats: Dict[str, int] = field(default_factory=dict)
 
 
@@ -242,9 +225,9 @@ class RecentRequest(TypedDict, total=False):
 
     id: int
     organizationId: Optional[str]
-    #: "search", "crawl" or "stealth".
+    #: "search" or "crawl".
     searchEngine: str
-    #: "auto" for searches, "crawl"/"stealth" for extract; None on older records.
+    #: "auto" for searches, "crawl" for extract; None on older records.
     requestedEngine: Optional[str]
     resultsCount: Optional[int]
     #: "success", "no_results" or "error".

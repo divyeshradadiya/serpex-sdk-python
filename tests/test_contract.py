@@ -141,16 +141,15 @@ def test_extract_markdown_html_failure():
     assert res.metadata.credits_used == 0
 
 
-def test_stealth_warns_once_and_is_sent():
-    client, sent = serve("extract_stealth")
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        res = client.extract({"urls": ["https://example.com"], "stealth": True})
+def test_extract_request_body_has_no_stealth_key():
+    client, sent = serve("extract_markdown")
+    client.extract({"urls": ["https://example.com"]})
+    assert "stealth" not in sent[0][2]["json"]
+    # a caller still passing the removed option is not forwarded either
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         client.extract({"urls": ["https://example.com"], "stealth": True})
-    stealth_warnings = [w for w in caught if "2026-11-01" in str(w.message)]
-    assert len(stealth_warnings) == 1
-    assert sent[0][2]["json"]["stealth"] is True
-    assert res.metadata.stealth is True and res.metadata.credits_used == 5
+    assert "stealth" not in sent[1][2]["json"]
 
 
 def test_usage_effective_days_and_recent_requests():
@@ -159,9 +158,9 @@ def test_usage_effective_days_and_recent_requests():
     assert query_of(sent[0][1]) == {"days": "7"}
     assert res.period_days == 7 and res.effective_days == 7
     assert isinstance(res.credits.balance, int)
-    assert set(res.statistics.engineStats) <= {"search", "crawl", "stealth"}
+    assert set(res.statistics.engineStats) <= {"search", "crawl"}
     assert res.recent_requests and "query" not in res.recent_requests[0]
-    assert res.recent_requests[0]["searchEngine"] in ("search", "crawl", "stealth")
+    assert res.recent_requests[0]["searchEngine"] in ("search", "crawl")
 
 
 @pytest.mark.parametrize(
@@ -211,10 +210,8 @@ def test_429_retry_hint_and_402_balance():
     "name,status,retryable",
     [
         ("error_402_extract", 402, False),
-        ("error_403_stealth_not_in_plan", 403, False),
-        ("error_410_stealth_ended", 410, False),
+        ("error_410_gone", 410, False),
         ("error_502_extract", 502, True),
-        ("error_503_stealth_busy", 503, True),
         ("error_504_extract", 504, True),
         ("error_400_extract_invalid_url", 400, False),
     ],
